@@ -1,0 +1,246 @@
+.assistant-page {
+    padding-bottom: 64px;
+}
+
+.assistant-page .page-heading {
+    margin-bottom: 27px;
+}
+
+.assistant-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    align-items: start;
+    gap: 17px;
+}
+
+.assistant-chat,
+.assistant-examples {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--card);
+}
+
+.assistant-chat {
+    min-height: 570px;
+    padding: 20px;
+}
+
+.assistant-welcome {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.assistant-welcome strong {
+    font-size: 12px;
+}
+
+.assistant-welcome p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.assistant-empty {
+    display: grid;
+    min-height: 315px;
+    align-content: center;
+    justify-items: center;
+    text-align: center;
+}
+
+.assistant-empty>span {
+    color: var(--accent);
+    font-size: 30px;
+}
+
+.assistant-empty h2 {
+    margin: 11px 0 6px;
+    font-size: 19px;
+}
+
+.assistant-empty p {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.chat-history {
+    display: grid;
+    gap: 20px;
+    padding: 18px 0;
+}
+
+.chat-turn {
+    display: grid;
+    gap: 13px;
+}
+
+.user-message {
+    justify-self: end;
+    max-width: 85%;
+    padding: 11px 14px;
+    border-radius: 9px 9px 2px 9px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.assistant-answer {
+    display: grid;
+    gap: 12px;
+}
+
+.assistant-answer>p:first-child,
+.why-it-works {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+.assistant-answer>p strong,
+.why-it-works strong {
+    color: var(--text);
+}
+
+.assistant-answer .palette-grid {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.assistant-answer .palette-card {
+    max-width: 440px;
+}
+
+.assistant-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.assistant-actions button,
+.assistant-actions a {
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 9px;
+    cursor: pointer;
+}
+
+.assistant-actions button:hover,
+.assistant-actions a:hover {
+    color: var(--accent);
+}
+
+.assistant-input {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding: 5px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+}
+
+.assistant-input input {
+    min-width: 0;
+    flex: 1;
+    padding: 0 9px;
+    border: 0;
+    outline: 0;
+    color: var(--text);
+    background: transparent;
+    font-size: 10px;
+}
+
+.assistant-input button {
+    padding: 0 13px;
+    border: 0;
+    border-radius: 4px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.assistant-input button span {
+    margin-left: 5px;
+}
+
+.assistant-disclaimer {
+    margin: 9px 0 0;
+    color: var(--quiet);
+    text-align: center;
+    font-size: 8px;
+}
+
+.assistant-examples {
+    padding: 19px 16px;
+}
+
+.assistant-examples h2 {
+    margin: 8px 0 14px;
+    font-size: 15px;
+}
+
+.assistant-examples>button {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 7px 0;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--muted);
+    background: var(--surface);
+    text-align: left;
+    font-size: 9px;
+    line-height: 1.6;
+    cursor: pointer;
+}
+
+.assistant-examples>button:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.assistant-examples>button span {
+    color: var(--accent);
+}
+
+@media (max-width: 850px) {
+    .assistant-layout {
+        grid-template-columns: minmax(0, 1fr) 215px;
+        gap: 12px;
+    }
+
+    .assistant-chat {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 620px) {
+    .assistant-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .assistant-examples {
+        order: -1;
+    }
+
+    .assistant-examples>button {
+        display: inline-flex;
+        width: auto;
+        margin-right: 4px;
+    }
+
+    .assistant-chat {
+        min-height: 450px;
+    }
+}

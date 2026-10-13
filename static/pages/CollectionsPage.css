@@ -1,0 +1,200 @@
+.collections-page {
+    padding-bottom: 64px;
+}
+
+.collection-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.collection-heading.page-heading {
+    margin-bottom: 43px;
+}
+
+.export-button {
+    flex: 0 0 auto;
+}
+
+.saved-section .section-heading,
+.collections-section .section-heading {
+    margin-bottom: 18px;
+}
+
+.count-pill {
+    display: inline-grid;
+    min-width: 21px;
+    height: 21px;
+    margin-left: 4px;
+    place-items: center;
+    border-radius: 20px;
+    color: var(--accent);
+    background: var(--surface-raised);
+    font: 10px "DM Sans", sans-serif;
+    vertical-align: 3px;
+}
+
+.collection-empty {
+    display: grid;
+    min-height: 190px;
+    justify-items: center;
+    align-content: center;
+    border: 1px dashed var(--line);
+    border-radius: 7px;
+    text-align: center;
+}
+
+.collection-empty>span {
+    color: var(--accent);
+    font-size: 25px;
+}
+
+.collection-empty h3 {
+    margin: 8px 0 4px;
+    font-size: 14px;
+}
+
+.collection-empty p {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.collection-empty a {
+    color: var(--accent);
+    font-size: 10px;
+}
+
+.collections-section {
+    margin-top: 48px;
+}
+
+.create-collection-form {
+    display: flex;
+    max-width: 480px;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.create-collection-form input {
+    min-width: 0;
+    flex: 1;
+    padding: 0 11px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--text);
+    background: var(--surface);
+    font-size: 10px;
+}
+
+.create-collection-form button {
+    padding: 0 12px;
+    border: 0;
+    border-radius: 5px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.collection-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.collection-card {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--card);
+}
+
+.collection-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.collection-card-head h3 {
+    margin: 0 0 4px;
+    font-size: 13px;
+}
+
+.collection-card-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.collection-card-head>div:last-child {
+    display: flex;
+    gap: 5px;
+}
+
+.collection-card-head button {
+    padding: 5px 7px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 8px;
+    cursor: pointer;
+}
+
+.collection-card-head button:hover {
+    color: var(--accent);
+}
+
+.collection-card>label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.collection-card select {
+    min-width: 0;
+    max-width: 65%;
+    min-height: 32px;
+}
+
+.collection-mini-swatches {
+    display: grid;
+    gap: 7px;
+    margin-top: 13px;
+}
+
+.collection-mini-swatches a {
+    display: flex;
+    height: 23px;
+    overflow: hidden;
+    border-radius: 3px;
+}
+
+.collection-mini-swatches i {
+    flex: 1;
+}
+
+@media (max-width: 620px) {
+    .collection-heading.page-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-top: 76px;
+    }
+
+    .collection-list {
+        grid-template-columns: 1fr;
+    }
+
+    .collections-section {
+        margin-top: 38px;
+    }
+}

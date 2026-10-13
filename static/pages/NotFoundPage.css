@@ -1,0 +1,24 @@
+.not-found-page {
+    display: flex;
+    min-height: 65vh;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.not-found-page h1 {
+    margin: 12px 0;
+    font-size: clamp(35px, 6vw, 55px);
+    letter-spacing: -2.5px;
+}
+
+.not-found-page p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.not-found-page>a {
+    margin-top: 7px;
+    color: var(--accent);
+    font-size: 11px;
+}

@@ -1,0 +1,285 @@
+.preview-page {
+    padding-bottom: 64px;
+}
+
+.preview-page .page-heading {
+    margin-bottom: 25px;
+}
+
+.preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.preview-toolbar>label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.preview-toolbar select {
+    min-width: 175px;
+    min-height: 35px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--text);
+    background: var(--surface);
+    font-size: 10px;
+}
+
+.mode-switch {
+    display: flex;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+
+.mode-switch button {
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 4px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 9px;
+    cursor: pointer;
+}
+
+.mode-switch button.selected {
+    color: var(--accent-ink);
+    background: var(--accent);
+}
+
+.site-mockup {
+    overflow: hidden;
+    padding: 0 5%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--mock-text);
+    background: var(--mock-bg);
+    transition: color .2s ease, background .2s ease;
+}
+
+.mock-nav {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid color-mix(in srgb, var(--mock-text) 15%, transparent);
+    font-size: 9px;
+}
+
+.mock-nav>strong {
+    font: 800 14px "Manrope", sans-serif;
+}
+
+.mock-nav>strong span {
+    color: var(--mock-accent);
+}
+
+.mock-nav>div {
+    display: flex;
+    gap: 20px;
+    opacity: .75;
+}
+
+.mock-nav>button {
+    padding: 7px 10px;
+    border: 1px solid color-mix(in srgb, var(--mock-text) 25%, transparent);
+    border-radius: 4px;
+    color: inherit;
+    background: transparent;
+    font-size: 8px;
+}
+
+.mock-hero {
+    max-width: 550px;
+    padding: clamp(34px, 6vw, 67px) 0 37px;
+}
+
+.mock-hero>span,
+.mock-cards article>span {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    opacity: .65;
+}
+
+.mock-hero h2 {
+    margin: 13px 0 9px;
+    font-size: clamp(29px, 5vw, 48px);
+    font-weight: 600;
+    letter-spacing: -2px;
+    line-height: 1.12;
+}
+
+.mock-hero p {
+    max-width: 360px;
+    opacity: .72;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
+.mock-hero button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 4px;
+    color: white;
+    background: var(--mock-primary);
+    font-size: 9px;
+}
+
+.mock-hero button span {
+    font-size: 14px;
+}
+
+.mock-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 12px 0 22px;
+}
+
+.mock-cards article {
+    display: grid;
+    gap: 7px;
+    padding: 14px;
+    border-top: 3px solid var(--mock-secondary);
+    border-radius: 5px;
+    background: var(--mock-surface);
+}
+
+.mock-cards article>strong {
+    font: 600 12px "Manrope", sans-serif;
+}
+
+.mock-cards article>p {
+    margin: 0;
+    opacity: .7;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.preview-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.color-controls,
+.preview-export {
+    padding: 17px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--card);
+}
+
+.color-controls h2,
+.preview-export h2 {
+    margin: 0 0 4px;
+    font-size: 14px;
+}
+
+.color-controls>div p,
+.preview-export>p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.color-controls>label {
+    display: grid;
+    grid-template-columns: 1fr 32px 70px;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.color-controls input[type="color"] {
+    width: 28px;
+    height: 25px;
+    padding: 2px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.color-controls code {
+    color: var(--text);
+    font-size: 9px;
+}
+
+.preview-export pre {
+    overflow-x: auto;
+    min-height: 113px;
+    margin: 0 0 12px;
+    padding: 11px;
+    border-radius: 4px;
+    color: var(--muted);
+    background: var(--page);
+    font: 9px/1.7 Consolas, monospace;
+}
+
+.preview-export button {
+    margin-right: 10px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 4px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.preview-export>a {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.preview-export>a:hover {
+    color: var(--accent);
+}
+
+.btn {
+    display: flex;
+    gap: 25px;
+}
+
+@media (max-width: 620px) {
+    .preview-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .preview-toolbar select {
+        min-width: 0;
+    }
+
+    .mock-nav>div {
+        gap: 8px;
+    }
+
+    .mock-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-bottom {
+        grid-template-columns: 1fr;
+    }
+}

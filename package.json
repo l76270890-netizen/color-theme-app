@@ -1,0 +1,18 @@
+{
+  "name": "huecraft",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 static",
+    "build": "vite build static"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}

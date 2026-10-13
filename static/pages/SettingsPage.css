@@ -1,0 +1,163 @@
+.settings-page {
+    padding-bottom: 64px;
+}
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 13px;
+}
+
+.settings-panel {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+}
+
+.settings-panel-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 18px;
+}
+
+.settings-icon {
+    display: grid;
+    width: 35px;
+    height: 35px;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--accent);
+    background: var(--surface);
+    font-size: 15px;
+}
+
+.settings-panel-heading h2 {
+    margin: 0 0 4px;
+    font-size: 14px;
+}
+
+.settings-panel-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.profile-settings>label {
+    display: grid;
+    gap: 6px;
+    margin: 12px 0;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.profile-settings>label input {
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text);
+    background: var(--page);
+    font-size: 10px;
+}
+
+.profile-settings>button {
+    min-height: 34px;
+    margin-top: 4px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 4px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.appearance-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.appearance-options button {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--muted);
+    background: var(--surface);
+    text-align: left;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.appearance-options button.selected {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.theme-sample {
+    display: grid;
+    height: 79px;
+    place-items: center;
+    border-radius: 4px;
+    font: 600 20px "Manrope", sans-serif;
+}
+
+.theme-sample-light {
+    color: #06141B;
+    background: #CCD0CF;
+}
+
+.theme-sample-dark {
+    color: #CCD0CF;
+    background: #06141B;
+}
+
+.settings-note {
+    margin: 13px 0 0;
+    color: var(--quiet);
+    font-size: 9px;
+    line-height: 1.6;
+}
+
+.account-settings {
+    grid-column: 1 / -1;
+}
+
+.account-settings .settings-panel-heading {
+    margin-bottom: 12px;
+}
+
+.account-notice {
+    padding: 13px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--surface);
+}
+
+.account-notice strong {
+    font-size: 10px;
+}
+
+.account-notice p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.6;
+}
+
+@media (max-width: 620px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .account-settings {
+        grid-column: auto;
+    }
+}

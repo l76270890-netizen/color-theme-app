@@ -1,0 +1,109 @@
+.explore-page {
+  padding-bottom: 64px;
+}
+
+.explore-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 23px;
+}
+
+.explore-search {
+  flex: 1;
+}
+
+.style-select-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.style-select-label select,
+.collection-card select {
+  min-height: 38px;
+  padding: 0 30px 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 10px;
+}
+
+.explore-filter-block {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 13px 0;
+}
+
+.explore-filter-block>span {
+  width: 77px;
+  flex: 0 0 auto;
+  color: var(--quiet);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .7px;
+}
+
+.explore-filter-block .filter-tabs {
+  gap: 3px;
+}
+
+.explore-filter-block .filter-tab {
+  min-height: 29px;
+  padding: 0 10px;
+  font-size: 9px;
+}
+
+.results-heading {
+  display: flex;
+  justify-content: space-between;
+  margin: 27px 0 13px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.results-heading span:first-child {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.explore-page .palette-grid {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 620px) {
+  .explore-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .style-select-label {
+    justify-content: space-between;
+  }
+
+  .style-select-label select {
+    width: 72%;
+  }
+
+  .explore-filter-block {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .explore-filter-block .filter-tabs {
+    gap: 1px;
+  }
+
+  .explore-filter-block .filter-tab {
+    padding: 0 8px;
+  }
+
+  .results-heading span:last-child {
+    display: none;
+  }
+}
