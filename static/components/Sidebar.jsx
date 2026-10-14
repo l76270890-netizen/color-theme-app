@@ -12,7 +12,7 @@ const links = [
 ];
 
 export default function Sidebar() {
-  const { sidebarCollapsed, setSidebarCollapsed, isSignedIn, signOut, profile } = useAppState();
+  const { sidebarCollapsed, setSidebarCollapsed, isSignedIn, signOut, profile, showToast } = useAppState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const pageScrollPosition = useRef(0);
@@ -147,7 +147,14 @@ export default function Sidebar() {
               <span className="sidebar-link-label">Sign in</span>
             </Link>
           ) : (
-            matchesSearch("Sign out") && <button className="sidebar-link mobile-sign-out" type="button" onClick={() => { setMobileMenuOpen(false); signOut(); }}>
+            matchesSearch("Sign out") && <button className="sidebar-link mobile-sign-out" type="button" onClick={async () => {
+              setMobileMenuOpen(false);
+              try {
+                await signOut();
+              } catch (error) {
+                showToast(error instanceof Error ? error.message : "Could not sign out");
+              }
+            }}>
               <span className="sidebar-icon" aria-hidden="true">↪</span>
               <span className="sidebar-link-label">Sign out</span>
             </button>

@@ -75,7 +75,7 @@ export default function AccountPage() {
           <Brand />
           <div className="eyebrow small-eyebrow">{isSignUp ? "YOUR COLOR WORKSPACE" : "WELCOME BACK"}</div>
           <h1 id="account-title">{isSignUp ? "Hello!" : "Welcome back."}</h1>
-          <p className="account-intro">{isSignUp ? "Create a local profile to personalize your Huecraft workspace." : "Sign in to continue to your Huecraft workspace on this device."}</p>
+          <p className="account-intro">{isSignUp ? "Create an account to personalize your Huecraft workspace." : "Sign in to continue to your Huecraft workspace."}</p>
           {isSignedIn && (
             <div className="account-signed-in">
               You’re already signed in on this device. <Link to="/settings">Manage your profile</Link>
@@ -86,10 +86,10 @@ export default function AccountPage() {
             <label htmlFor="account-email">Email address<input id="account-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
             <label htmlFor="account-password">Password<input id="account-password" type="password" autoComplete={isSignUp ? "new-password" : "current-password"} minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" required /></label>
             {error && <p className="account-error" role="alert">{error}</p>}
-            <button type="submit" disabled={submitting}>{submitting ? "One moment..." : isSignUp ? "Create local account" : "Continue with email"} <span>↗</span></button>
+            <button type="submit" disabled={submitting}>{submitting ? "One moment..." : isSignUp ? "Create account" : "Continue with email"} <span>↗</span></button>
           </form>
           <p className="account-switch">
-            {isSignUp ? "Already have a local account?" : "New to Huecraft?"}{" "}
+            {isSignUp ? "Already have an account?" : "New to Huecraft?"}{" "}
             <Link
               to={isSignUp ? "/login" : "/signup"}
               state={backgroundLocation ? { backgroundLocation } : undefined}
@@ -97,7 +97,7 @@ export default function AccountPage() {
               {isSignUp ? "Sign in" : "Create an account"}
             </Link>
           </p>
-          <p className="account-local-note"><strong>Local demo account</strong>Your profile and a password verifier stay in this browser only. There is no server account, sync, or password recovery. Don’t reuse a real password here.</p>
+          <p className="account-local-note"><strong>Secure account</strong>Your password is securely hashed by the Huecraft server. Your session is protected with an HTTP-only cookie.</p>
         </div>
       </section>
       <aside className="account-art" aria-label="Huecraft color workspace">

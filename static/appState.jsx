@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { palettes } from "./paletteData.js";
 
 const AppStateContext = createContext(null);
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 function readStoredValue(key, fallback) {
   try {
@@ -27,41 +28,77 @@ function usePersistentState(key, fallback) {
 
 const emptyProfile = { name: "Workspace", email: "", role: "Designer & developer" };
 
-async function hashPassword(password, salt) {
-  const material = await window.crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"],
-  );
-  const bits = await window.crypto.subtle.deriveBits({
-    name: "PBKDF2",
-    salt: Uint8Array.from(atob(salt), (character) => character.charCodeAt(0)),
-    iterations: 210000,
-    hash: "SHA-256",
-  }, material, 256);
-  return Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, "0")).join("");
+async function authRequest(path, { method = "GET", body } = {}) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth${path}`, {
+      method,
+      credentials: "include",
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error("Could not reach the authentication server. Make sure the backend is running.");
+  }
+
+  if (response.status === 204) return null;
+
+  const result = await response.json();
+  if (!response.ok) {
+    const detail = result.detail;
+    const message = Array.isArray(detail)
+      ? detail.map((item) => item.msg).join(" ")
+      : detail;
+    throw new Error(typeof message === "string" ? message : "Could not complete that action.");
+  }
+  return result;
 }
 
-function makeSalt() {
-  const bytes = window.crypto.getRandomValues(new Uint8Array(16));
-  return btoa(String.fromCharCode(...bytes));
+function toProfile(user) {
+  return { name: user.name, email: user.email, role: user.role };
 }
 
 export function AppStateProvider({ children }) {
   const [theme, setTheme] = usePersistentState("huecraft-theme", "dark");
   const [sidebarCollapsed, setSidebarCollapsed] = usePersistentState("huecraft-sidebar-collapsed", false);
   const [favorites, setFavorites] = usePersistentState("huecraft-favorites", []);
-  const [accounts, setAccounts] = usePersistentState("huecraft-demo-accounts", []);
-  const [currentUserEmail, setCurrentUserEmail] = usePersistentState("huecraft-current-user", "");
   const [collections, setCollections] = usePersistentState("huecraft-collections", [
     { id: "inspiration", name: "Inspiration", paletteIds: [] },
   ]);
-  const [profile, setProfile] = usePersistentState("huecraft-profile", {
-    ...emptyProfile,
-  });
+  const [profile, setProfile] = useState(emptyProfile);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    try {
+      for (const key of ["huecraft-demo-accounts", "huecraft-current-user", "huecraft-profile"]) {
+        window.localStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.warn("Could not clear the old browser-only account data:", error);
+    }
+
+    let active = true;
+    authRequest("/me")
+      .then((user) => {
+        if (!active) return;
+        setProfile(toProfile(user));
+        setIsSignedIn(true);
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (!error.message.includes("Please sign in")) {
+          console.error("Could not restore the authentication session:", error);
+          setToast(error.message);
+        }
+        setProfile(emptyProfile);
+        setIsSignedIn(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -72,49 +109,44 @@ export function AppStateProvider({ children }) {
   const showToast = (message) => setToast(message);
 
   const signUp = async ({ name, email, password }) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (accounts.some((account) => account.email === normalizedEmail)) {
-      throw new Error("An account with this email already exists in this browser");
-    }
-    const salt = makeSalt();
-    const accountProfile = { name: name.trim(), email: normalizedEmail, role: "Designer & developer" };
-    const passwordHash = await hashPassword(password, salt);
-    setAccounts((current) => [...current, { ...accountProfile, salt, passwordHash }]);
+    const user = await authRequest("/signup", {
+      method: "POST",
+      body: { name, email, password },
+    });
+    const accountProfile = toProfile(user);
     setProfile(accountProfile);
-    setCurrentUserEmail(normalizedEmail);
-    showToast("Your local Huecraft account is ready");
+    setIsSignedIn(true);
+    showToast("Your Huecraft account is ready");
   };
 
   const signIn = async ({ email, password }) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const account = accounts.find((item) => item.email === normalizedEmail);
-    if (!account || await hashPassword(password, account.salt) !== account.passwordHash) {
-      throw new Error("Email or password is incorrect");
-    }
-    setProfile({ name: account.name, email: account.email, role: account.role });
-    setCurrentUserEmail(account.email);
-    showToast(`Welcome back, ${account.name}`);
+    const user = await authRequest("/login", {
+      method: "POST",
+      body: { email, password },
+    });
+    setProfile(toProfile(user));
+    setIsSignedIn(true);
+    showToast(`Welcome back, ${user.name}`);
   };
 
-  const updateProfile = (nextProfile) => {
-    const normalizedEmail = nextProfile.email.trim().toLowerCase();
-    if (currentUserEmail && accounts.some((account) => account.email === normalizedEmail && account.email !== currentUserEmail)) {
-      throw new Error("That email is already used by another local account");
-    }
-    const savedProfile = { ...nextProfile, email: normalizedEmail };
+  const updateProfile = async (nextProfile) => {
+    const user = await authRequest("/me", {
+      method: "PATCH",
+      body: {
+        name: nextProfile.name,
+        email: nextProfile.email,
+        role: nextProfile.role,
+      },
+    });
+    const savedProfile = toProfile(user);
     setProfile(savedProfile);
-    if (currentUserEmail) {
-      setAccounts((current) => current.map((account) => account.email === currentUserEmail
-        ? { ...account, ...savedProfile }
-        : account));
-      setCurrentUserEmail(normalizedEmail);
-    }
     return savedProfile;
   };
 
-  const signOut = () => {
-    setCurrentUserEmail("");
+  const signOut = async () => {
+    await authRequest("/logout", { method: "POST" });
     setProfile(emptyProfile);
+    setIsSignedIn(false);
     showToast("You have been signed out");
   };
 
@@ -146,7 +178,7 @@ export function AppStateProvider({ children }) {
     setTheme,
     sidebarCollapsed,
     setSidebarCollapsed,
-    isSignedIn: Boolean(currentUserEmail),
+    isSignedIn,
     signUp,
     signIn,
     signOut,
@@ -155,13 +187,12 @@ export function AppStateProvider({ children }) {
     collections,
     setCollections,
     profile,
-    setProfile,
     updateProfile,
     toast,
     showToast,
     copyText,
     toggleFavorite,
-  }), [theme, sidebarCollapsed, favorites, accounts, currentUserEmail, collections, profile, toast]);
+  }), [theme, sidebarCollapsed, isSignedIn, favorites, collections, profile, toast]);
 
   return (
     <AppStateContext.Provider value={value}>

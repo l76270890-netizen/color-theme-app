@@ -214,6 +214,10 @@
     color: var(--accent);
 }
 
+form.assistant-input {
+    padding: 8px;
+}
+
 @media (max-width: 850px) {
     .assistant-layout {
         grid-template-columns: minmax(0, 1fr) 215px;
@@ -242,5 +246,9 @@
 
     .assistant-chat {
         min-height: 450px;
+    }
+
+    form.assistant-input {
+        padding: 11px;
     }
 }

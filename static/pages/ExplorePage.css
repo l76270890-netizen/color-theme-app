@@ -75,6 +75,7 @@
   margin-bottom: 20px;
 }
 
+
 @media (max-width: 620px) {
   .explore-controls {
     align-items: stretch;
@@ -106,4 +107,9 @@
   .results-heading span:last-child {
     display: none;
   }
+
+  label.search-box.explore-search {
+    padding: 13px;
+  }
+
 }

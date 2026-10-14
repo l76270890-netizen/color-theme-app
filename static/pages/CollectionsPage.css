@@ -197,4 +197,9 @@
     .collections-section {
         margin-top: 38px;
     }
+
+
+    input#new-collection {
+        padding: 11px;
+    }
 }

@@ -10,7 +10,7 @@ const links = [
 ];
 
 export default function Header() {
-  const { theme, setTheme, profile, isSignedIn, signOut } = useAppState();
+  const { theme, setTheme, profile, isSignedIn, signOut, showToast } = useAppState();
   const location = useLocation();
   const accountNavigationState = { backgroundLocation: location };
 
@@ -36,7 +36,13 @@ export default function Header() {
               <span>{profile.name.slice(0, 1).toUpperCase()}</span>
               <span className="profile-name">{profile.name}</span>
             </Link>
-            <button className="get-started-button sign-out-button" type="button" onClick={signOut}>Sign out</button>
+            <button className="get-started-button sign-out-button" type="button" onClick={async () => {
+              try {
+                await signOut();
+              } catch (error) {
+                showToast(error instanceof Error ? error.message : "Could not sign out");
+              }
+            }}>Sign out</button>
           </>
         ) : (
           <>

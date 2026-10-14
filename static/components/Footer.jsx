@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Brand from "./Brand.jsx";
+import './footer.css';
 
 export default function Footer() {
   return (
