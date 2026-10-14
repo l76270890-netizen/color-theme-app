@@ -92,7 +92,7 @@ textarea:focus-visible {
   overflow: hidden;
   padding: 0 6.25%;
   color: var(--text);
-  background: radial-gradient(ellipse at 92% 10%, rgba(74, 92, 106, .2), transparent 31rem), var(--page);
+  background: radial-gradient(ellipse at 92% 10%, var(--page-glow), transparent 31rem), var(--page);
   transition: background-color .25s ease, color .25s ease;
 }
 
@@ -109,7 +109,7 @@ textarea:focus-visible {
   --accent-ink: var(--slate-300);
   --card: var(--slate-300);
   color-scheme: light;
-  background: radial-gradient(ellipse at 92% 10%, rgba(155, 168, 171, .25), transparent 31rem), var(--page);
+  background: radial-gradient(ellipse at 92% 10%, var(--page-glow), transparent 31rem), var(--page);
 }
 
 .topbar {

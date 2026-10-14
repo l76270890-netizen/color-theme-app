@@ -2,13 +2,13 @@ export const palettes = [
   {
     id: "deep-current",
     name: "Deep Current",
-    description: "Quiet depth, cool clarity",
+    description: "Smoked browns and soft rose neutrals",
     category: "SaaS",
-    mood: "Calm",
+    mood: "Warm",
     style: "Dark",
     previewMode: "dark",
-    keywords: ["coastal", "ocean", "calm", "cool", "dark", "futuristic", "dashboard", "fintech"],
-    colors: ["#0D1F23", "#132E35", "#2D4A53", "#69818D", "#AFB3B7"],
+    keywords: ["neutral", "brown", "rose", "warm", "dark", "minimalist", "editorial", "dashboard"],
+    colors: ["#2A0800", "#775144", "#C09891", "#BEA8A7", "#FAD8D8"],
   },
   {
     id: "citrus-hour",

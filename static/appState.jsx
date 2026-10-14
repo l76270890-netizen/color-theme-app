@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { palettes } from "./paletteData.js";
+import { getThemePaletteStyle, themePalettes } from "./themePalettes.js";
 
 const AppStateContext = createContext(null);
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
@@ -28,10 +29,10 @@ function usePersistentState(key, fallback) {
 
 const emptyProfile = { name: "Workspace", email: "", role: "Designer & developer" };
 
-async function authRequest(path, { method = "GET", body } = {}) {
+async function apiRequest(path, { method = "GET", body } = {}) {
   let response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/auth${path}`, {
+    response = await fetch(`${API_BASE_URL}/api${path}`, {
       method,
       credentials: "include",
       headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -65,9 +66,20 @@ export function AppStateProvider({ children }) {
   const [collections, setCollections] = usePersistentState("huecraft-collections", [
     { id: "inspiration", name: "Inspiration", paletteIds: [] },
   ]);
+  const [themePaletteIndex, setThemePaletteIndex] = useState(0);
   const [profile, setProfile] = useState(emptyProfile);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [workspaceReady, setWorkspaceReady] = useState(false);
+  const [workspaceSyncEnabled, setWorkspaceSyncEnabled] = useState(false);
   const [toast, setToast] = useState("");
+  const activeThemePalette = themePalettes[themePaletteIndex];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setThemePaletteIndex((current) => (current + 1) % themePalettes.length);
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     try {
@@ -79,13 +91,26 @@ export function AppStateProvider({ children }) {
     }
 
     let active = true;
-    authRequest("/me")
-      .then((user) => {
+    const restoreSession = async () => {
+      try {
+        const user = await apiRequest("/auth/me");
         if (!active) return;
         setProfile(toProfile(user));
         setIsSignedIn(true);
-      })
-      .catch((error) => {
+        try {
+          const workspace = await apiRequest("/workspace");
+          if (!active) return;
+          setTheme(workspace.theme);
+          setSidebarCollapsed(workspace.sidebarCollapsed);
+          setFavorites(workspace.favorites);
+          setCollections(workspace.collections);
+          setWorkspaceSyncEnabled(true);
+        } catch (error) {
+          if (!active) return;
+          console.error("Could not restore the saved workspace:", error);
+          setToast(`Signed in, but could not restore your workspace: ${error.message}`);
+        }
+      } catch (error) {
         if (!active) return;
         if (!error.message.includes("Please sign in")) {
           console.error("Could not restore the authentication session:", error);
@@ -93,12 +118,36 @@ export function AppStateProvider({ children }) {
         }
         setProfile(emptyProfile);
         setIsSignedIn(false);
-      });
+        setWorkspaceSyncEnabled(false);
+      } finally {
+        if (active) setWorkspaceReady(true);
+      }
+    };
+    restoreSession();
 
     return () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isSignedIn || !workspaceReady || !workspaceSyncEnabled) return undefined;
+    const timer = window.setTimeout(() => {
+      apiRequest("/workspace", {
+        method: "PUT",
+        body: {
+          theme,
+          sidebarCollapsed,
+          favorites,
+          collections,
+        },
+      }).catch((error) => {
+        console.error("Could not save the workspace:", error);
+        setToast(`Could not save your workspace: ${error.message}`);
+      });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [theme, sidebarCollapsed, favorites, collections, isSignedIn, workspaceReady, workspaceSyncEnabled]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -109,28 +158,47 @@ export function AppStateProvider({ children }) {
   const showToast = (message) => setToast(message);
 
   const signUp = async ({ name, email, password }) => {
-    const user = await authRequest("/signup", {
+    const user = await apiRequest("/auth/signup", {
       method: "POST",
       body: { name, email, password },
     });
     const accountProfile = toProfile(user);
     setProfile(accountProfile);
     setIsSignedIn(true);
-    showToast("Your Huecraft account is ready");
+    await restoreWorkspaceForSignedInUser("Your Huecraft account is ready");
   };
 
   const signIn = async ({ email, password }) => {
-    const user = await authRequest("/login", {
+    const user = await apiRequest("/auth/login", {
       method: "POST",
       body: { email, password },
     });
     setProfile(toProfile(user));
     setIsSignedIn(true);
-    showToast(`Welcome back, ${user.name}`);
+    await restoreWorkspaceForSignedInUser(`Welcome back, ${user.name}`);
+  };
+
+  const restoreWorkspaceForSignedInUser = async (successMessage) => {
+    setWorkspaceReady(false);
+    setWorkspaceSyncEnabled(false);
+    try {
+      const workspace = await apiRequest("/workspace");
+      setTheme(workspace.theme);
+      setSidebarCollapsed(workspace.sidebarCollapsed);
+      setFavorites(workspace.favorites);
+      setCollections(workspace.collections);
+      setWorkspaceSyncEnabled(true);
+      showToast(successMessage);
+    } catch (error) {
+      console.error("Could not restore the saved workspace:", error);
+      showToast(`Signed in, but could not restore your workspace: ${error.message}`);
+    } finally {
+      setWorkspaceReady(true);
+    }
   };
 
   const updateProfile = async (nextProfile) => {
-    const user = await authRequest("/me", {
+    const user = await apiRequest("/auth/me", {
       method: "PATCH",
       body: {
         name: nextProfile.name,
@@ -144,9 +212,10 @@ export function AppStateProvider({ children }) {
   };
 
   const signOut = async () => {
-    await authRequest("/logout", { method: "POST" });
+    await apiRequest("/auth/logout", { method: "POST" });
     setProfile(emptyProfile);
     setIsSignedIn(false);
+    setWorkspaceSyncEnabled(false);
     showToast("You have been signed out");
   };
 
@@ -176,6 +245,7 @@ export function AppStateProvider({ children }) {
   const value = useMemo(() => ({
     theme,
     setTheme,
+    activeThemePalette,
     sidebarCollapsed,
     setSidebarCollapsed,
     isSignedIn,
@@ -192,11 +262,15 @@ export function AppStateProvider({ children }) {
     showToast,
     copyText,
     toggleFavorite,
-  }), [theme, sidebarCollapsed, isSignedIn, favorites, collections, profile, toast]);
+  }), [theme, activeThemePalette, sidebarCollapsed, isSignedIn, favorites, collections, profile, toast]);
 
   return (
     <AppStateContext.Provider value={value}>
-      <div className={`page-shell${theme === "light" ? " theme-light" : ""}`}>
+      <div
+        className={`page-shell${theme === "light" ? " theme-light" : ""}`}
+        data-color-combo={themePalettes[themePaletteIndex].id}
+        style={getThemePaletteStyle(themePalettes[themePaletteIndex], theme)}
+      >
         {children}
         <div className="toast" role="status" aria-live="polite" data-visible={Boolean(toast)}>{toast}</div>
       </div>

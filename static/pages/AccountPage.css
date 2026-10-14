@@ -1,20 +1,4 @@
 .account-page.page-content {
-    --slate-950: #06141B;
-    --slate-900: #11212D;
-    --slate-800: #253745;
-    --slate-700: #4A5C6A;
-    --slate-500: #9BA8AB;
-    --slate-300: #CCD0CF;
-    --page: var(--slate-950);
-    --surface: var(--slate-900);
-    --surface-raised: var(--slate-800);
-    --line: rgba(204, 208, 207, .16);
-    --text: var(--slate-300);
-    --muted: var(--slate-500);
-    --quiet: var(--slate-700);
-    --accent: var(--slate-300);
-    --accent-ink: var(--slate-950);
-    --card: var(--slate-900);
     position: fixed;
     z-index: 100;
     inset: 0;
@@ -34,16 +18,6 @@
 }
 
 .account-page.page-content.theme-light {
-    --page: var(--slate-300);
-    --surface: var(--slate-500);
-    --surface-raised: var(--slate-300);
-    --line: rgba(6, 20, 27, .17);
-    --text: var(--slate-950);
-    --muted: var(--slate-800);
-    --quiet: var(--slate-700);
-    --accent: var(--slate-800);
-    --accent-ink: var(--slate-300);
-    --card: var(--slate-300);
     color-scheme: light;
 }
 

@@ -24,10 +24,18 @@ export default function HomePage() {
   const [assistantPalette, setAssistantPalette] = useState(null);
   const [previewId, setPreviewId] = useState("deep-current");
   const navigate = useNavigate();
-  const { favorites, toggleFavorite, copyText, showToast } = useAppState();
+  const { favorites, toggleFavorite, copyText, showToast, activeThemePalette, theme } = useAppState();
   const previewPalette = palettes.find((palette) => palette.id === previewId) ?? palettes[0];
   const previewMode = previewPalette.previewMode;
   const previewColors = palettePreviewColors(previewPalette, previewMode);
+  const activeThemeColors = activeThemePalette[theme];
+  const heroThemeColors = [
+    activeThemeColors.page,
+    activeThemeColors.surface,
+    activeThemeColors.raised,
+    activeThemeColors.accent,
+    activeThemeColors.muted,
+  ];
 
   const filteredPalettes = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -80,11 +88,11 @@ export default function HomePage() {
             <Link className="home-ai-button" to="/assistant"><span>✳</span> Generate with AI</Link>
           </div>
         </div>
-        <Link className="home-feature" to="/palette/deep-current" aria-label="Explore featured palette Deep Current">
-          <div className="feature-copy"><span className="eyebrow">✳ FEATURED PALETTE</span><h2>Deep Current</h2><p>Quiet depth, cool clarity</p></div>
-          <div className="feature-swatches">{palettes[0].colors.map((color) => <span key={color} style={{ backgroundColor: color }} />)}</div>
-          <div className="feature-footer"><span>5 considered colors</span><span>Explore palette ↗</span></div>
-        </Link>
+        <div className="home-feature" aria-label={`Current website theme: ${activeThemePalette.name}`}>
+          <div className="feature-copy"><span className="eyebrow">✳ CURRENT WEBSITE THEME</span><h2>{activeThemePalette.name}</h2><p>{theme === "dark" ? "Dark" : "Light"} mode · updates every minute</p></div>
+          <div className="feature-swatches">{heroThemeColors.map((color) => <span key={color} style={{ backgroundColor: color }} />)}</div>
+          <div className="feature-footer"><span>5 website colors</span><span>{activeThemePalette.name}</span></div>
+        </div>
       </section>
 
       <section className="home-quick-search" aria-labelledby="home-filters-heading">

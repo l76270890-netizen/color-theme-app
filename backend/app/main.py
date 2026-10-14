@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import router as auth_router
 from app.database import Base, engine, settings
+from app.workspace import router as workspace_router
 
 
 @asynccontextmanager
@@ -20,8 +21,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
 
 app.include_router(auth_router)
+app.include_router(workspace_router)

@@ -2,7 +2,7 @@ from collections.abc import Generator
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlalchemy import Integer, String, create_engine
+from sqlalchemy import Boolean, ForeignKey, Integer, JSON, String, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 
@@ -45,6 +45,23 @@ class User(Base):
     )
 
 
+class WorkspacePreferences(Base):
+    __tablename__ = "workspace_preferences"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    theme: Mapped[str] = mapped_column(String(10), nullable=False, default="dark")
+    sidebar_collapsed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    favorites: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    collections: Mapped[list[dict[str, object]]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=lambda: [{"id": "inspiration", "name": "Inspiration", "paletteIds": []}],
+    )
+
+
 engine = create_engine(settings.database_url, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
@@ -52,4 +69,3 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 def get_db() -> Generator[Session, None, None]:
     with SessionLocal() as session:
         yield session
-

@@ -135,7 +135,7 @@ def set_auth_cookie(response: Response, user_id: int) -> None:
         httponly=True,
         secure=settings.cookie_secure,
         samesite="lax",
-        path="/api/auth",
+        path="/api",
     )
 
 
@@ -237,6 +237,6 @@ def sign_out(request: Request, response: Response) -> None:
         httponly=True,
         secure=settings.cookie_secure,
         samesite="lax",
-        path="/api/auth",
+        path="/api",
     )
     response.status_code = status.HTTP_204_NO_CONTENT
