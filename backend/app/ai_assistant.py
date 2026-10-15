@@ -1,8 +1,11 @@
 import json
 import logging
+import random
 import re
+import time
 from functools import lru_cache
 from typing import Literal
+
 
 from fastapi import APIRouter, HTTPException, Request, status
 from google import genai
@@ -119,6 +122,68 @@ def build_model_prompt(payload: AssistantRequest) -> str:
     return "\n\n".join(prompt_parts)
 
 
+RETRYABLE_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+MAX_ATTEMPTS_PER_MODEL = 3
+BASE_BACKOFF_SECONDS = 1.0
+
+
+def is_retryable_error(error: errors.APIError) -> bool:
+    # Only transient overload/availability errors are retried. Other 4xx
+    # errors (400/401/403/404) will not succeed on a retry.
+    return error.code in RETRYABLE_STATUS_CODES
+
+
+def generate_with_model(client: genai.Client, model: str, prompt: str):
+    """Call Gemini with exponential backoff on transient errors.
+
+    Raises the last APIError once attempts are exhausted, or immediately for
+    non-retryable errors.
+    """
+    for attempt in range(1, MAX_ATTEMPTS_PER_MODEL + 1):
+        try:
+            return client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=GeminiReply,
+                    temperature=0.4,
+                ),
+            )
+        except errors.APIError as error:
+            if not is_retryable_error(error) or attempt == MAX_ATTEMPTS_PER_MODEL:
+                raise
+            delay = BASE_BACKOFF_SECONDS * (2 ** (attempt - 1)) + random.uniform(0, 0.25)
+            logger.warning(
+                "Gemini request to model %s failed with status %s (attempt %d/%d); retrying in %.2fs",
+                model,
+                error.code,
+                attempt,
+                MAX_ATTEMPTS_PER_MODEL,
+                delay,
+            )
+            time.sleep(delay)
+    raise RuntimeError("unreachable")  # pragma: no cover
+
+
+def generate_with_retries(client: genai.Client, prompt: str):
+    primary_model = settings.gemini_model
+    fallback_model = settings.gemini_fallback_model or primary_model
+    try:
+        return generate_with_model(client, primary_model, prompt)
+    except errors.APIError as error:
+        if fallback_model == primary_model or not is_retryable_error(error):
+            raise
+        logger.warning(
+            "Gemini model %s unavailable after %d attempts; falling back to model %s",
+            primary_model,
+            MAX_ATTEMPTS_PER_MODEL,
+            fallback_model,
+        )
+    return generate_with_model(client, fallback_model, prompt)
+
+
+
 @router.post("/chat", response_model=AssistantResponse)
 def chat_with_assistant(
     payload: AssistantRequest,
@@ -138,15 +203,8 @@ def chat_with_assistant(
 
     try:
         client = get_genai_client(settings.gemini_api_key)
-        response = client.models.generate_content(
-            model=settings.gemini_model,
-            contents=build_model_prompt(payload),
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=GeminiReply,
-                temperature=0.4,
-            ),
-        )
+        response = generate_with_retries(client, build_model_prompt(payload))
+
     except errors.APIError as error:
         logger.exception("Gemini request failed")
         raise HTTPException(

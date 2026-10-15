@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(default=720, gt=0)
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
+    # Optional model tried once retries on gemini_model are exhausted with a
+    # transient error (429/503). Env var: GEMINI_FALLBACK_MODEL. When unset, it
+    # equals gemini_model, so the fallback is a no-op.
+    gemini_fallback_model: str | None = None
 
     @property
     def cors_origins(self) -> list[str]:
