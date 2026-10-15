@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from functools import lru_cache
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -14,6 +15,13 @@ from app.database import settings
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["AI assistant"])
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+@lru_cache(maxsize=1)
+def get_genai_client(api_key: str) -> genai.Client:
+    # Reuse one client for the process lifetime. A per-request client can be
+    # garbage collected (and its HTTP transport closed) while a call is in flight.
+    return genai.Client(api_key=api_key)
 
 
 class PaletteCandidate(BaseModel):
@@ -129,7 +137,8 @@ def chat_with_assistant(
         )
 
     try:
-        response = genai.Client(api_key=settings.gemini_api_key).models.generate_content(
+        client = get_genai_client(settings.gemini_api_key)
+        response = client.models.generate_content(
             model=settings.gemini_model,
             contents=build_model_prompt(payload),
             config=types.GenerateContentConfig(
