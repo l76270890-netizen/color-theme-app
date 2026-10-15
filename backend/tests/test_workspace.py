@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from pathlib import Path
@@ -10,7 +11,6 @@ os.environ["FRONTEND_ORIGINS"] = "http://127.0.0.1:5173"
 
 import pytest
 from fastapi.testclient import TestClient
-from types import SimpleNamespace
 
 from app.database import Base, engine, settings
 from app.main import app
@@ -110,7 +110,7 @@ def test_workspace_rejects_untrusted_origin(client):
 
 
 def test_ai_assistant_requires_a_backend_api_key(client, monkeypatch):
-    monkeypatch.setattr(settings, "gemini_api_key", None)
+    monkeypatch.setattr(settings, "groq_api_key", None)
 
     response = client.post(
         "/api/ai/chat",
@@ -123,22 +123,16 @@ def test_ai_assistant_requires_a_backend_api_key(client, monkeypatch):
 
 
 def test_ai_assistant_generates_valid_five_color_palette(client, monkeypatch):
-    monkeypatch.setattr(settings, "gemini_api_key", "test-gemini-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-groq-key")
     monkeypatch.setattr(
-        ai_assistant.genai,
-        "Client",
-        lambda **_: SimpleNamespace(
-            models=SimpleNamespace(
-                generate_content=lambda **_: SimpleNamespace(
-                    text=(
-                        '{"answer":"A muted palette with a bright accent.",'
-                        '"palette_name":"Ocean Glass",'
-                        '"palette_description":"Soft sea tones with a clear accent.",'
-                        '"colors":["#102030","#234567","#4680A0","#A0C0D0","#F0C050"]}'
-                    )
-                )
-            )
-        ),
+        ai_assistant,
+        "request_groq_reply",
+        lambda *_: ai_assistant.AssistantModelReply.model_validate({
+            "answer": "A muted palette with a bright accent.",
+            "palette_name": "Ocean Glass",
+            "palette_description": "Soft sea tones with a clear accent.",
+            "colors": ["#102030", "#234567", "#4680A0", "#A0C0D0", "#F0C050"],
+        }),
     )
 
     response = client.post(
@@ -161,17 +155,14 @@ def test_ai_assistant_generates_valid_five_color_palette(client, monkeypatch):
 
 
 def test_ai_assistant_recommends_only_a_submitted_huecraft_palette(client, monkeypatch):
-    monkeypatch.setattr(settings, "gemini_api_key", "test-gemini-key")
+    monkeypatch.setattr(settings, "groq_api_key", "test-groq-key")
     monkeypatch.setattr(
-        ai_assistant.genai,
-        "Client",
-        lambda **_: SimpleNamespace(
-            models=SimpleNamespace(
-                generate_content=lambda **_: SimpleNamespace(
-                    text='{"answer":"Its calm greens fit a botanical shop.","palette_id":"botanical-market"}'
-                )
-            )
-        ),
+        ai_assistant,
+        "request_groq_reply",
+        lambda *_: ai_assistant.AssistantModelReply.model_validate({
+            "answer": "Its calm greens fit a botanical shop.",
+            "palette_id": "botanical-market",
+        }),
     )
     palette = {
         "id": "botanical-market",
@@ -214,6 +205,41 @@ def test_ai_assistant_accepts_existing_palettes_with_six_or_seven_colors():
     )
 
     assert len(palette.colors) == 7
+
+
+def test_groq_request_uses_server_key_and_returns_assistant_reply(monkeypatch):
+    import httpx
+
+    monkeypatch.setattr(settings, "groq_api_key", "server-only-test-key")
+    monkeypatch.setattr(settings, "groq_model", "test-model")
+    response_content = {
+        "answer": "Use a cool blue with a warm accent.",
+        "palette_name": None,
+        "palette_description": None,
+        "colors": [],
+        "palette_id": None,
+    }
+    upstream_response = {
+        "choices": [{"message": {"content": json.dumps(response_content)}}]
+    }
+    captured = {}
+
+    def fake_post(url, **kwargs):
+        captured["url"] = url
+        captured.update(kwargs)
+        return httpx.Response(200, json=upstream_response, request=httpx.Request("POST", url))
+
+    client = httpx.Client()
+    monkeypatch.setattr(client, "post", fake_post)
+    reply = ai_assistant.request_groq_reply("Explain color contrast", client)
+
+    assert reply.answer == response_content["answer"]
+    assert captured["url"] == "https://api.groq.com/openai/v1/chat/completions"
+    assert captured["headers"]["Authorization"] == "Bearer server-only-test-key"
+    assert captured["json"]["model"] == "test-model"
+    assert captured["json"]["reasoning_effort"] == "low"
+    assert captured["json"]["max_completion_tokens"] == 384
+    client.close()
 
 
 def test_ai_assistant_rejects_prompts_over_limit(client):

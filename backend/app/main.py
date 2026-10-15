@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,8 +13,15 @@ from app.workspace import router as workspace_router
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
-    Base.metadata.create_all(bind=engine)
-    yield
+    app.state.groq_client = httpx.Client(
+        timeout=httpx.Timeout(20.0, connect=5.0),
+        limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
+    )
+    try:
+        Base.metadata.create_all(bind=engine)
+        yield
+    finally:
+        app.state.groq_client.close()
 
 
 app = FastAPI(title="Huecraft API", lifespan=lifespan)

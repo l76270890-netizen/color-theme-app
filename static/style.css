@@ -2736,6 +2736,335 @@ h3 {
   font-weight: 600;
 }
 
+.assistant-panel {
+  z-index: 2;
+  gap: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  background:
+    radial-gradient(ellipse at 50% 8%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 58%),
+    color-mix(in srgb, var(--surface) 88%, var(--page));
+}
+
+.assistant-panel-heading {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 44px 4px 14px;
+  border: 0;
+  text-align: center;
+}
+
+.assistant-panel-heading .eyebrow {
+  color: var(--accent);
+  font-size: 8px;
+  letter-spacing: 1.1px;
+}
+
+.assistant-panel-heading h2 {
+  margin: 0;
+  font-size: clamp(20px, 1.8vw, 25px);
+  letter-spacing: -.7px;
+}
+
+.assistant-panel-heading p {
+  max-width: 230px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.assistant-online {
+  position: absolute;
+  top: 11px;
+  right: 4px;
+  margin: 0;
+}
+
+.assistant-panel-form {
+  flex: 0 0 auto;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-raised) 55%, var(--page));
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.assistant-panel-form:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent), 0 8px 30px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.assistant-panel-form textarea {
+  min-height: 76px;
+  padding: 4px 5px;
+  resize: vertical;
+  font-size: 12px;
+}
+
+.assistant-panel-form textarea::placeholder {
+  color: var(--muted);
+}
+
+.assistant-composer-tools {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.assistant-mode-label {
+  padding-left: 5px;
+  color: var(--quiet);
+  font-size: 9px;
+}
+
+.assistant-composer-tools button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.assistant-composer-tools button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.assistant-composer-tools button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.assistant-mode-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.assistant-mode-controls button {
+  min-width: 0;
+  min-height: 31px;
+  padding: 5px 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.assistant-mode-controls button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.assistant-mode-controls button:disabled,
+.assistant-prompt-suggestions button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.assistant-panel .assistant-prompt-suggestions {
+  gap: 4px;
+  margin-top: 22px;
+}
+
+.assistant-panel .assistant-hint {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.assistant-panel .assistant-prompt-suggestions button {
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  align-items: start;
+  justify-content: initial;
+  gap: 8px;
+  min-height: 35px;
+  padding: 8px 3px;
+  border: 0;
+  border-radius: 5px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.assistant-panel .assistant-prompt-suggestions button:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.assistant-panel .assistant-prompt-suggestions button span {
+  color: var(--accent);
+  text-align: center;
+}
+
+.assistant-reply {
+  max-height: min(32vh, 260px);
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--page) 65%, var(--surface));
+}
+
+.assistant-reply>p {
+  margin: 0;
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.assistant-reply-palette {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.assistant-reply-palette .assistant-swatch-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  height: 42px;
+  gap: 3px;
+  margin: 0 0 3px;
+}
+
+.assistant-reply-palette .assistant-swatch-row button {
+  min-width: 0;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.assistant-reply-palette>strong {
+  font: 700 11px "Manrope", sans-serif;
+}
+
+.assistant-reply-palette>span {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.assistant-reply-palette>a {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.assistant-full-link {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+@media (max-width: 940px) {
+  .assistant-panel {
+    width: 100%;
+    max-height: none;
+    padding: 26px clamp(20px, 6vw, 60px);
+    overflow: visible;
+  }
+
+  .assistant-panel-heading {
+    padding-top: 20px;
+  }
+
+  .assistant-panel-form {
+    width: min(100%, 620px);
+    align-self: center;
+  }
+
+  .assistant-mode-controls {
+    width: min(100%, 620px);
+    align-self: center;
+  }
+
+  .assistant-panel .assistant-prompt-suggestions {
+    width: min(100%, 620px);
+    align-self: center;
+    margin-top: 18px;
+  }
+
+  .assistant-reply {
+    width: min(100%, 620px);
+    max-height: 38vh;
+    align-self: center;
+  }
+}
+
+@media (max-width: 620px) {
+  .assistant-panel {
+    order: 3;
+    min-height: 0;
+    padding: 24px 18px 22px;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .assistant-panel-heading {
+    padding: 12px 0 10px;
+  }
+
+  .assistant-panel-heading h2 {
+    font-size: 24px;
+  }
+
+  .assistant-panel-form {
+    margin-top: 16px;
+    padding: 11px;
+    border-radius: 16px;
+  }
+
+  .assistant-panel-form textarea {
+    min-height: 66px;
+    font-size: 16px;
+  }
+
+  .assistant-mode-controls button {
+    min-height: 40px;
+    font-size: 10px;
+  }
+
+  .assistant-panel .assistant-prompt-suggestions button {
+    min-height: 42px;
+    font-size: 11px;
+  }
+
+  .assistant-reply {
+    max-height: 42vh;
+  }
+
+  .assistant-reply>p {
+    font-size: 12px;
+  }
+
+  .assistant-full-link {
+    margin-bottom: 0;
+    font-size: 10px;
+  }
+}
+
 @media (max-width: 620px) {
   .home-copy h1 {
     letter-spacing: -1.7px;

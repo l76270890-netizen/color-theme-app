@@ -54,16 +54,20 @@ backend to the exact frontend origin. For HTTPS deployments, set
 
 ## AI assistant
 
-The assistant uses Google's `google-genai` Python SDK from the backend to
-generate palettes, recommend existing Huecraft palettes, and answer color
-questions. Set `GEMINI_API_KEY` as a private backend environment variable
+The assistant calls Groq's OpenAI-compatible chat completions API from the
+backend to generate palettes, recommend existing Huecraft palettes, and answer
+color questions. Set `GROQ_API_KEY` as a private backend environment variable
 (for example, in Railway). Never put this key in Vercel's `VITE_*` variables or
-frontend source. The backend optionally accepts `GEMINI_MODEL`; it defaults to
-`gemini-2.5-flash`.
+frontend source. The backend optionally accepts `GROQ_MODEL`; it defaults to
+`openai/gpt-oss-20b`, Groq's recommended replacement for the now-deprecated
+`llama-3.1-8b-instant` model. Set `GROQ_MODEL=openai/gpt-oss-20b` in Railway
+too if it already has an older model explicitly configured.
+Requests reuse a pooled connection, have a 20-second timeout, and cap generated
+output at 384 tokens with low reasoning effort to reduce wait time.
 
-The provider's free-tier availability and quota depend on Google's current
-terms and account. Requests are limited to 1,000 characters, and generated
-palettes are checked for exactly five valid HEX colors.
+Provider availability and quota depend on Groq's current terms and account.
+Requests are limited to 1,000 characters, and generated palettes are checked
+for exactly five valid HEX colors.
 
 For Render or similar platforms, the backend includes a `Procfile` that starts
 FastAPI with Gunicorn and Uvicorn:

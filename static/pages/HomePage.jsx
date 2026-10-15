@@ -90,7 +90,7 @@ export default function HomePage() {
         </div>
         <div className="home-feature" aria-label={`Current website theme: ${activeThemePalette.name}`}>
           <div className="feature-copy"><span className="eyebrow">✳ CURRENT WEBSITE THEME</span><h2>{activeThemePalette.name}</h2><p>{theme === "dark" ? "Dark" : "Light"} mode · updates every minute</p></div>
-          <div className="feature-swatches">{heroThemeColors.map((color) => <span key={color} style={{ backgroundColor: color }} />)}</div>
+          <div className="feature-swatches">{heroThemeColors.map((color, index) => <span key={`${color}-${index}`} style={{ backgroundColor: color }} />)}</div>
           <div className="feature-footer"><span>5 website colors</span><span>{activeThemePalette.name}</span></div>
         </div>
       </section>

@@ -1,14 +1,10 @@
 import json
 import logging
-import random
 import re
-import time
-from functools import lru_cache
 from typing import Literal
 
+import httpx
 from fastapi import APIRouter, HTTPException, Request, status
-from google import genai
-from google.genai import errors, types
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from app.auth import validate_browser_origin
@@ -17,15 +13,6 @@ from app.database import settings
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["AI assistant"])
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
-GEMINI_MAX_ATTEMPTS = 3
-GEMINI_FALLBACK_MODEL = "gemini-3.6-flash"
-
-
-@lru_cache(maxsize=1)
-def get_genai_client(api_key: str) -> genai.Client:
-    # Reuse one client for the process lifetime. A per-request client can be
-    # garbage collected (and its HTTP transport closed) while a call is in flight.
-    return genai.Client(api_key=api_key)
 
 
 class PaletteCandidate(BaseModel):
@@ -60,7 +47,7 @@ class AssistantRequest(BaseModel):
         return normalized
 
 
-class GeminiReply(BaseModel):
+class AssistantModelReply(BaseModel):
     answer: str = Field(min_length=1, max_length=2000)
     palette_name: str | None = Field(default=None, max_length=100)
     palette_description: str | None = Field(default=None, max_length=300)
@@ -123,43 +110,65 @@ def build_model_prompt(payload: AssistantRequest) -> str:
     return "\n\n".join(prompt_parts)
 
 
-def is_transient_gemini_error(error: errors.APIError) -> bool:
-    if isinstance(error, errors.ServerError):
-        return error.code in (429, 503)
-    if isinstance(error, errors.ClientError):
-        return error.code == 429
-    return False
+def request_groq_reply(prompt: str, client: httpx.Client) -> AssistantModelReply:
+    try:
+        response = client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+            json={
+                "model": settings.groq_model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are Huecraft's color assistant. Return JSON with "
+                            "answer, palette_name, palette_description, colors, "
+                            "and palette_id. Use null or [] when fields do not "
+                            "apply. Generated palettes need exactly five HEX colors. "
+                            "Keep answers concise and under 80 words."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.4,
+                "reasoning_effort": "low",
+                "max_completion_tokens": 384,
+            },
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as error:
+        logger.error("Groq request failed with HTTP status %s", error.response.status_code)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE if error.response.status_code == 429
+            else status.HTTP_502_BAD_GATEWAY,
+            detail="Groq could not complete the request. Check the backend key, model, and quota.",
+        ) from error
+    except httpx.TimeoutException as error:
+        logger.warning("Groq request timed out")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="The AI request took too long. Please try again.",
+        ) from error
+    except httpx.RequestError as error:
+        logger.exception("Could not connect to Groq")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not reach the AI provider. Please try again.",
+        ) from error
 
-
-def generate_with_retry(
-    client: genai.Client,
-    contents: str,
-    config: types.GenerateContentConfig,
-):
-    # Gemini intermittently returns 503/429 during capacity spikes. Retry the
-    # primary model with exponential backoff and jitter, then make one last
-    # attempt on a fallback model before surfacing the error.
-    for attempt in range(GEMINI_MAX_ATTEMPTS):
-        try:
-            return client.models.generate_content(
-                model=settings.gemini_model, contents=contents, config=config
-            )
-        except errors.APIError as error:
-            if not is_transient_gemini_error(error):
-                raise
-            if attempt < GEMINI_MAX_ATTEMPTS - 1:
-                delay = 2**attempt + random.uniform(0, 0.5)
-                logger.warning(
-                    "Gemini transient error %s, retrying in %.1fs", error.code, delay
-                )
-                time.sleep(delay)
-            elif settings.gemini_model == GEMINI_FALLBACK_MODEL:
-                raise
-
-    logger.warning("Gemini primary model unavailable, using %s", GEMINI_FALLBACK_MODEL)
-    return client.models.generate_content(
-        model=GEMINI_FALLBACK_MODEL, contents=contents, config=config
-    )
+    try:
+        response_body = response.json()
+        content = response_body["choices"][0]["message"]["content"]
+        if not isinstance(content, str):
+            raise ValueError("Groq response content was not text")
+        return AssistantModelReply.model_validate_json(content)
+    except (KeyError, IndexError, TypeError, ValidationError, ValueError) as error:
+        logger.exception("Groq returned an invalid assistant response")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The AI provider returned an invalid response. Please try again.",
+        ) from error
 
 
 @router.post("/chat", response_model=AssistantResponse)
@@ -168,10 +177,10 @@ def chat_with_assistant(
     request: Request,
 ) -> AssistantResponse:
     validate_browser_origin(request)
-    if not settings.gemini_api_key:
+    if not settings.groq_api_key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI assistant is not configured. Set GEMINI_API_KEY on the backend.",
+            detail="AI assistant is not configured. Set GROQ_API_KEY on the backend.",
         )
     if payload.mode == "recommend" and not payload.palettes:
         raise HTTPException(
@@ -179,32 +188,7 @@ def chat_with_assistant(
             detail="Provide Huecraft palettes to get a recommendation.",
         )
 
-    try:
-        client = get_genai_client(settings.gemini_api_key)
-        response = generate_with_retry(
-            client,
-            contents=build_model_prompt(payload),
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=GeminiReply,
-                temperature=0.4,
-            ),
-        )
-    except errors.APIError as error:
-        logger.exception("Gemini request failed")
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="The AI provider could not complete the request. Check its key and quota.",
-        ) from error
-
-    try:
-        reply = GeminiReply.model_validate_json(response.text or "")
-    except (ValidationError, ValueError) as error:
-        logger.exception("Gemini returned an invalid assistant response")
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="The AI provider returned an invalid response. Please try again.",
-        ) from error
+    reply = request_groq_reply(build_model_prompt(payload), request.app.state.groq_client)
 
     if payload.mode == "generate":
         if not reply.palette_name or not reply.palette_description or len(reply.colors) != 5:

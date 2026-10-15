@@ -63,7 +63,7 @@ export default function AssistantPage() {
             <div className="assistant-empty"><span>✳</span><h2>What are you making?</h2><p>Start with a project, a feeling, or a color you love.</p></div>
           ) : (
             <div className="chat-history">{chat.map((item, index) => (
-              <div className="chat-turn" key={`${item.palette.id}-${index}`}>
+              <div className="chat-turn" key={`${item.mode}-${index}`}>
                 <div className="user-message">{item.prompt}</div>
                 <div className="assistant-answer">
                   <p>{item.answer}</p>
@@ -99,7 +99,7 @@ export default function AssistantPage() {
               <button key={value} type="button" aria-pressed={mode === value} onClick={() => setMode(value)} disabled={isLoading}>{label}</button>
             ))}
           </div>
-          <p className="assistant-disclaimer">Powered by Gemini. Generated colors should be checked for accessibility before use.</p>
+          <p className="assistant-disclaimer">Powered by Groq. Generated colors should be checked for accessibility before use.</p>
         </section>
         <aside className="assistant-examples"><span className="eyebrow small-eyebrow">NEED A PROMPT?</span><h2>Try one of these.</h2>{examples.map((example) => <button key={example} type="button" onClick={() => setPrompt(example)}>{example}<span>↗</span></button>)}</aside>
       </div>

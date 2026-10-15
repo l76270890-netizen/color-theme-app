@@ -123,8 +123,8 @@ def main() -> None:
                 f"JWT_SECRET_KEY={jwt_secret}",
                 "FRONTEND_ORIGINS=http://127.0.0.1:5173,http://localhost:5173,http://color-theme-app-xi.vercel.app",
                 "COOKIE_SECURE=false",
-                "GEMINI_API_KEY=",
-                "GEMINI_MODEL=gemini-2.5-flash",
+                "GROQ_API_KEY=",
+                "GROQ_MODEL=openai/gpt-oss-20b",
                 "",
             ]
         )

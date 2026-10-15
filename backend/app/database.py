@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     frontend_origins: str = "http://127.0.0.1:5173,http://localhost:5173,http://color-theme-app-xi.vercel.app  "
     cookie_secure: bool = False
     access_token_expire_minutes: int = Field(default=720, gt=0)
-    gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.5-flash"
+    groq_api_key: str | None = None
+    groq_model: str = "openai/gpt-oss-20b"
 
     @property
     def cors_origins(self) -> list[str]:
