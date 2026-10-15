@@ -44,15 +44,28 @@ async function apiRequest(path, { method = "GET", body } = {}) {
 
   if (response.status === 204) return null;
 
-  const result = await response.json();
+  const responseText = await response.text();
+  let result;
+  try {
+    result = responseText ? JSON.parse(responseText) : null;
+  } catch {
+    throw new Error(`The server returned an unreadable response (HTTP ${response.status}).`);
+  }
   if (!response.ok) {
-    const detail = result.detail;
+    const detail = result?.detail;
     const message = Array.isArray(detail)
       ? detail.map((item) => item.msg).join(" ")
       : detail;
     throw new Error(typeof message === "string" ? message : "Could not complete that action.");
   }
+  if (result === null) {
+    throw new Error(`The server returned an empty response (HTTP ${response.status}).`);
+  }
   return result;
+}
+
+export function requestAssistant(payload) {
+  return apiRequest("/ai/chat", { method: "POST", body: payload });
 }
 
 function toProfile(user) {

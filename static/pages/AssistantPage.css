@@ -135,6 +135,82 @@
     color: var(--accent);
 }
 
+.assistant-mode-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+.assistant-mode-controls button,
+.generated-palette {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+}
+
+.assistant-mode-controls button {
+    padding: 7px 10px;
+    color: var(--muted);
+    background: var(--surface);
+    font-size: 9px;
+    cursor: pointer;
+}
+
+.assistant-mode-controls button[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.assistant-mode-controls button:disabled,
+.assistant-actions button:disabled {
+    cursor: wait;
+    opacity: .6;
+}
+
+.generated-palette {
+    display: grid;
+    gap: 12px;
+    max-width: 520px;
+    padding: 14px;
+    background: var(--surface);
+}
+
+.generated-palette h3 {
+    margin: 6px 0 4px;
+}
+
+.generated-palette p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.generated-swatches {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.generated-swatches button {
+    display: flex;
+    min-width: 0;
+    min-height: 86px;
+    align-items: end;
+    justify-content: center;
+    padding: 5px 2px;
+    border: 0;
+    cursor: pointer;
+}
+
+.generated-swatches button span {
+    padding: 3px;
+    border-radius: 3px;
+    color: #fff;
+    background: rgb(0 0 0 / 55%);
+    font-size: 8px;
+}
+
 .assistant-input {
     display: flex;
     gap: 8px;

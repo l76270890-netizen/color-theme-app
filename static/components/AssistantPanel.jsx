@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAppState } from "../appState.jsx";
-import { findPalette } from "../paletteData.js";
+import { requestAssistant, useAppState } from "../appState.jsx";
+import { palettes } from "../paletteData.js";
 
 const prompts = [
   "Calm palette for a dashboard",
@@ -12,15 +12,24 @@ const prompts = [
 export default function AssistantPanel() {
   const [prompt, setPrompt] = useState("");
   const [suggestion, setSuggestion] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useAppState();
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     if (!prompt.trim()) {
       showToast("Tell the assistant what you’re designing");
       return;
     }
-    setSuggestion(findPalette(prompt));
+    setIsLoading(true);
+    try {
+      const response = await requestAssistant({ mode: "recommend", prompt: prompt.trim(), palettes });
+      setSuggestion(response.palette);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "The assistant could not find a palette.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,7 +65,7 @@ export default function AssistantPanel() {
           onChange={(event) => setPrompt(event.target.value)}
           placeholder="A mood, a project, a color..."
         />
-        <button type="submit">Find my palette <span>↗</span></button>
+        <button type="submit" disabled={isLoading}>{isLoading ? "Finding..." : "Find my palette"} <span>↗</span></button>
       </form>
       <Link className="assistant-full-link" to="/assistant">Open full assistant <span>→</span></Link>
     </aside>

@@ -10,9 +10,11 @@ os.environ["FRONTEND_ORIGINS"] = "http://127.0.0.1:5173"
 
 import pytest
 from fastapi.testclient import TestClient
+from types import SimpleNamespace
 
-from app.database import Base, engine
+from app.database import Base, engine, settings
 from app.main import app
+from app import ai_assistant
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -105,3 +107,125 @@ def test_workspace_rejects_untrusted_origin(client):
         headers={"Origin": "https://malicious.example"},
     )
     assert response.status_code == 403
+
+
+def test_ai_assistant_requires_a_backend_api_key(client, monkeypatch):
+    monkeypatch.setattr(settings, "gemini_api_key", None)
+
+    response = client.post(
+        "/api/ai/chat",
+        json={"mode": "generate", "prompt": "A calm ocean palette"},
+        headers={"Origin": "http://127.0.0.1:5173"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"].startswith("AI assistant is not configured")
+
+
+def test_ai_assistant_generates_valid_five_color_palette(client, monkeypatch):
+    monkeypatch.setattr(settings, "gemini_api_key", "test-gemini-key")
+    monkeypatch.setattr(
+        ai_assistant.genai,
+        "Client",
+        lambda **_: SimpleNamespace(
+            models=SimpleNamespace(
+                generate_content=lambda **_: SimpleNamespace(
+                    text=(
+                        '{"answer":"A muted palette with a bright accent.",'
+                        '"palette_name":"Ocean Glass",'
+                        '"palette_description":"Soft sea tones with a clear accent.",'
+                        '"colors":["#102030","#234567","#4680A0","#A0C0D0","#F0C050"]}'
+                    )
+                )
+            )
+        ),
+    )
+
+    response = client.post(
+        "/api/ai/chat",
+        json={"mode": "generate", "prompt": "Calm ocean colors for a dashboard"},
+        headers={"Origin": "http://127.0.0.1:5173"},
+    )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["mode"] == "generate"
+    assert result["palette"]["name"] == "Ocean Glass"
+    assert result["palette"]["colors"] == [
+        "#102030",
+        "#234567",
+        "#4680A0",
+        "#A0C0D0",
+        "#F0C050",
+    ]
+
+
+def test_ai_assistant_recommends_only_a_submitted_huecraft_palette(client, monkeypatch):
+    monkeypatch.setattr(settings, "gemini_api_key", "test-gemini-key")
+    monkeypatch.setattr(
+        ai_assistant.genai,
+        "Client",
+        lambda **_: SimpleNamespace(
+            models=SimpleNamespace(
+                generate_content=lambda **_: SimpleNamespace(
+                    text='{"answer":"Its calm greens fit a botanical shop.","palette_id":"botanical-market"}'
+                )
+            )
+        ),
+    )
+    palette = {
+        "id": "botanical-market",
+        "name": "Botanical Market",
+        "description": "Fresh greens and market-day warmth",
+        "category": "E-commerce",
+        "mood": "Natural",
+        "style": "Light",
+        "colors": ["#F4F1E6", "#DCE3C4", "#A2B18A", "#647A58", "#354B3C"],
+        "keywords": ["natural", "shop", "botanical"],
+    }
+
+    response = client.post(
+        "/api/ai/chat",
+        json={
+            "mode": "recommend",
+            "prompt": "A natural palette for an online shop",
+            "palettes": [palette],
+        },
+        headers={"Origin": "http://127.0.0.1:5173"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["palette"] == palette
+
+
+def test_ai_assistant_rejects_prompts_over_limit(client):
+    response = client.post(
+        "/api/ai/chat",
+        json={"mode": "ask", "prompt": "a" * 1001},
+        headers={"Origin": "http://127.0.0.1:5173"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_ai_assistant_rejects_invalid_palette_hex_values(client):
+    response = client.post(
+        "/api/ai/chat",
+        json={
+            "mode": "recommend",
+            "prompt": "Find a match",
+            "palettes": [{
+                "id": "invalid",
+                "name": "Invalid",
+                "description": "Not a valid palette",
+                "category": "Test",
+                "mood": "Test",
+                "style": "Test",
+                "colors": ["not-hex", "#234567", "#4680A0", "#A0C0D0", "#F0C050"],
+                "keywords": [],
+            }],
+        },
+        headers={"Origin": "http://127.0.0.1:5173"},
+    )
+
+    assert response.status_code == 422

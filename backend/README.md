@@ -51,6 +51,19 @@ address, set `VITE_API_URL` in the frontend environment. Set `FRONTEND_ORIGINS`
 to the exact frontend origin. For HTTPS deployments, set `COOKIE_SECURE=true`
 and use a private JWT secret.
 
+## AI assistant
+
+The assistant uses Google's `google-genai` Python SDK from the backend to
+generate palettes, recommend existing Huecraft palettes, and answer color
+questions. Set `GEMINI_API_KEY` as a private backend environment variable
+(for example, in Railway). Never put this key in Vercel's `VITE_*` variables or
+frontend source. The backend optionally accepts `GEMINI_MODEL`; it defaults to
+`gemini-2.5-flash`.
+
+The provider's free-tier availability and quota depend on Google's current
+terms and account. Requests are limited to 1,000 characters, and generated
+palettes are checked for exactly five valid HEX colors.
+
 For Render or similar platforms, the backend includes a `Procfile` that starts
 FastAPI with Gunicorn and Uvicorn:
 
@@ -69,6 +82,8 @@ web: gunicorn app.main:app --workers 1 --worker-class uvicorn.workers.UvicornWor
   collections.
 - `PUT /api/workspace` — save those workspace preferences to the signed-in user's
   account.
+- `POST /api/ai/chat` — generate a palette, recommend a Huecraft palette, or ask
+  a color question. The request `mode` is `generate`, `recommend`, or `ask`.
 
 Workspace preferences are also cached in the browser for guest use. After
 signing in, the account's saved preferences are restored and changes sync to the
