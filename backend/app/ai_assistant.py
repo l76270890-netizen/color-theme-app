@@ -1,6 +1,8 @@
 import json
 import logging
+import random
 import re
+import time
 from functools import lru_cache
 from typing import Literal
 
@@ -15,6 +17,8 @@ from app.database import settings
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["AI assistant"])
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
+GEMINI_MAX_ATTEMPTS = 3
+GEMINI_FALLBACK_MODEL = "gemini-2.5-flash"
 
 
 @lru_cache(maxsize=1)
@@ -119,6 +123,45 @@ def build_model_prompt(payload: AssistantRequest) -> str:
     return "\n\n".join(prompt_parts)
 
 
+def is_transient_gemini_error(error: errors.APIError) -> bool:
+    if isinstance(error, errors.ServerError):
+        return error.code in (429, 503)
+    if isinstance(error, errors.ClientError):
+        return error.code == 429
+    return False
+
+
+def generate_with_retry(
+    client: genai.Client,
+    contents: str,
+    config: types.GenerateContentConfig,
+):
+    # Gemini intermittently returns 503/429 during capacity spikes. Retry the
+    # primary model with exponential backoff and jitter, then make one last
+    # attempt on a fallback model before surfacing the error.
+    for attempt in range(GEMINI_MAX_ATTEMPTS):
+        try:
+            return client.models.generate_content(
+                model=settings.gemini_model, contents=contents, config=config
+            )
+        except errors.APIError as error:
+            if not is_transient_gemini_error(error):
+                raise
+            if attempt < GEMINI_MAX_ATTEMPTS - 1:
+                delay = 2**attempt + random.uniform(0, 0.5)
+                logger.warning(
+                    "Gemini transient error %s, retrying in %.1fs", error.code, delay
+                )
+                time.sleep(delay)
+            elif settings.gemini_model == GEMINI_FALLBACK_MODEL:
+                raise
+
+    logger.warning("Gemini primary model unavailable, using %s", GEMINI_FALLBACK_MODEL)
+    return client.models.generate_content(
+        model=GEMINI_FALLBACK_MODEL, contents=contents, config=config
+    )
+
+
 @router.post("/chat", response_model=AssistantResponse)
 def chat_with_assistant(
     payload: AssistantRequest,
@@ -138,8 +181,8 @@ def chat_with_assistant(
 
     try:
         client = get_genai_client(settings.gemini_api_key)
-        response = client.models.generate_content(
-            model=settings.gemini_model,
+        response = generate_with_retry(
+            client,
             contents=build_model_prompt(payload),
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
