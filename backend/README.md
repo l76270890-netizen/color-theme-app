@@ -46,10 +46,11 @@ signed-in workspace preferences.
    The users table is created on startup. Interactive API documentation is at
    `http://127.0.0.1:8000/docs`.
 
-The frontend expects the API at `http://127.0.0.1:8000`. For a different API
-address, set `VITE_API_URL` in the frontend environment. Set `FRONTEND_ORIGINS`
-to the exact frontend origin. For HTTPS deployments, set `COOKIE_SECURE=true`
-and use a private JWT secret.
+The frontend uses `http://127.0.0.1:8000` locally and defaults to the production
+Railway API when built for production. For a different API address, set
+`VITE_API_URL` in the frontend environment. Set `FRONTEND_ORIGINS` on the
+backend to the exact frontend origin. For HTTPS deployments, set
+`COOKIE_SECURE=true` and use a private JWT secret.
 
 ## AI assistant
 

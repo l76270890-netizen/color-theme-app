@@ -3,7 +3,16 @@ import { palettes } from "./paletteData.js";
 import { getThemePaletteStyle, themePalettes } from "./themePalettes.js";
 
 const AppStateContext = createContext(null);
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const defaultApiUrl = import.meta.env.PROD
+  ? "https://color-theme-app-production.up.railway.app"
+  : "http://127.0.0.1:8000";
+const selectedApiUrl = configuredApiUrl || defaultApiUrl;
+const API_BASE_URL = (
+  /^[a-z][a-z\d+.-]*:\/\//i.test(selectedApiUrl)
+    ? selectedApiUrl
+    : `https://${selectedApiUrl}`
+).replace(/\/$/, "");
 
 function readStoredValue(key, fallback) {
   try {
@@ -39,7 +48,7 @@ async function apiRequest(path, { method = "GET", body } = {}) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new Error("Could not reach the authentication server. Make sure the backend is running.");
+    throw new Error("Could not reach the authentication server. Check VITE_API_URL and make sure Railway allows this site's origin in FRONTEND_ORIGINS.");
   }
 
   if (response.status === 204) return null;
