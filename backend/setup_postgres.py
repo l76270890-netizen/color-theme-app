@@ -121,8 +121,10 @@ def main() -> None:
             [
                 f"DATABASE_URL={database_url}",
                 f"JWT_SECRET_KEY={jwt_secret}",
-                "FRONTEND_ORIGINS=http://127.0.0.1:5173,http://localhost:5173",
+                "FRONTEND_ORIGINS=http://127.0.0.1:5173,http://localhost:5173,http://color-theme-app-xi.vercel.app",
                 "COOKIE_SECURE=false",
+                f"GEMINI_API_KEY={gemini_api_key}",
+                f"GEMINI_MODEL={gemini_model}",
                 "",
             ]
         )
