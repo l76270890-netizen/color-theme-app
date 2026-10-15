@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["AI assistant"])
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
 GEMINI_MAX_ATTEMPTS = 3
-GEMINI_FALLBACK_MODEL = "gemini-2.5-flash"
+GEMINI_FALLBACK_MODEL = "gemini-3.6-flash"
 
 
 @lru_cache(maxsize=1)
