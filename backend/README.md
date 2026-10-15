@@ -61,6 +61,14 @@ questions. Set `GEMINI_API_KEY` as a private backend environment variable
 frontend source. The backend optionally accepts `GEMINI_MODEL`; it defaults to
 `gemini-2.5-flash`.
 
+Transient provider errors (HTTP 429, 500, 502, 503, 504) are retried up to three
+times per model with exponential backoff (about 1s, then 2s, plus jitter).
+Other 4xx errors are not retried. If every attempt on `GEMINI_MODEL` fails with
+a transient error, the backend tries `GEMINI_FALLBACK_MODEL` once more with the
+same retry policy. It is optional and defaults to the value of `GEMINI_MODEL`,
+which makes the fallback a no-op unless you configure a different model.
+
+
 The provider's free-tier availability and quota depend on Google's current
 terms and account. Requests are limited to 1,000 characters, and generated
 palettes are checked for exactly five valid HEX colors.
