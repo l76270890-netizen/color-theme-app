@@ -23,7 +23,7 @@ class PaletteCandidate(BaseModel):
     category: str = Field(max_length=80)
     mood: str = Field(max_length=80)
     style: str = Field(max_length=80)
-    colors: list[str] = Field(min_length=5, max_length=5)
+    colors: list[str] = Field(min_length=5, max_length=7)
     keywords: list[str] = Field(max_length=30)
 
     @field_validator("colors")

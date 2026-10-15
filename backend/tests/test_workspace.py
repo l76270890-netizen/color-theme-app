@@ -198,6 +198,24 @@ def test_ai_assistant_recommends_only_a_submitted_huecraft_palette(client, monke
     assert response.json()["palette"] == palette
 
 
+def test_ai_assistant_accepts_existing_palettes_with_six_or_seven_colors():
+    colors = ["#111111", "#222222", "#333333", "#444444", "#555555", "#666666", "#777777"]
+    from app.ai_assistant import PaletteCandidate
+
+    palette = PaletteCandidate(
+        id="seven-color-palette",
+        name="Seven Colors",
+        description="Palette from the expanded Explore collection",
+        category="Inspiration",
+        mood="Bold",
+        style="Vibrant",
+        colors=colors,
+        keywords=[],
+    )
+
+    assert len(palette.colors) == 7
+
+
 def test_ai_assistant_rejects_prompts_over_limit(client):
     response = client.post(
         "/api/ai/chat",
