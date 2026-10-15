@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { requestAssistant, useAppState } from "../appState.jsx";
 import { palettes } from "../paletteData.js";
@@ -18,26 +18,48 @@ const modes = [
 export default function AssistantPanel() {
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState("ask");
-  const [reply, setReply] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { copyText, showToast } = useAppState();
+  const messageId = useRef(0);
+  const conversationRef = useRef(null);
+
+  useEffect(() => {
+    const conversation = conversationRef.current;
+    if (conversation) conversation.scrollTo({ top: conversation.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
   const submit = async (event) => {
     event.preventDefault();
-    if (!prompt.trim()) {
+    const text = prompt.trim();
+    if (!text) {
       showToast("Tell the assistant what you’re designing");
       return;
     }
+    const id = ++messageId.current;
     setIsLoading(true);
+    setPrompt("");
+    setMessages((current) => [...current, {
+      id,
+      prompt: text,
+      mode,
+      loading: true,
+    }]);
     try {
       const response = await requestAssistant({
         mode,
-        prompt: prompt.trim(),
+        prompt: text,
         ...(mode === "recommend" ? { palettes } : {}),
       });
-      setReply(response);
+      setMessages((current) => current.map((message) => (
+        message.id === id ? { ...message, ...response, loading: false } : message
+      )));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "The assistant could not complete your request.");
+      const message = error instanceof Error ? error.message : "The assistant could not complete your request.";
+      setMessages((current) => current.map((entry) => (
+        entry.id === id ? { ...entry, loading: false, error: message } : entry
+      )));
+      showToast(message);
     } finally {
       setIsLoading(false);
     }
@@ -51,31 +73,64 @@ export default function AssistantPanel() {
         <h2>Meet AI Mode</h2>
         <p>Ask detailed questions for better color ideas.</p>
       </div>
-      {reply && (
-        <div className="assistant-reply" aria-live="polite">
-          <p>{reply.answer}</p>
-          {reply.palette && (
-            <div className="assistant-reply-palette">
-              <div className="assistant-swatch-row">
-                {reply.palette.colors.map((color, index) => (
-                  <button
-                    key={`${color}-${index}`}
-                    type="button"
-                    style={{ backgroundColor: color }}
-                    onClick={() => copyText(color, `${color} copied to clipboard`)}
-                    aria-label={`Copy ${color}`}
-                  />
-                ))}
+      <div ref={conversationRef} className={`assistant-conversation${messages.length ? " has-messages" : ""}`} aria-live="polite">
+        {messages.length === 0 ? (
+          <div className="assistant-conversation-empty">
+            <span className="assistant-empty-mark" aria-hidden="true">✳</span>
+            <strong>Your color copilot is ready.</strong>
+            <p>Ask a question, describe a palette, or find a match.</p>
+          </div>
+        ) : messages.map((message) => (
+          <div className="assistant-conversation-turn" key={message.id}>
+            <div className="assistant-user-bubble">{message.prompt}</div>
+            <div className="assistant-bot-row">
+              <span className="assistant-avatar" aria-hidden="true">✳</span>
+              <div className="assistant-bot-content">
+                {message.loading ? (
+                  <div className="assistant-bot-bubble assistant-thinking" role="status">
+                    <span className="assistant-typing-dots" aria-hidden="true"><i /><i /><i /></span>
+                    <span>Thinking through your colors…</span>
+                  </div>
+                ) : (
+                  <div className={`assistant-bot-bubble${message.error ? " is-error" : ""}`}>
+                    {message.error ? <p>{message.error}</p> : <p>{message.answer}</p>}
+                  </div>
+                )}
+                {message.palette && (
+                  <div className="assistant-reply-palette">
+                    <div className="assistant-swatch-row">
+                      {message.palette.colors.map((color, index) => (
+                        <button
+                          key={`${color}-${index}`}
+                          type="button"
+                          style={{ backgroundColor: color }}
+                          onClick={() => copyText(color, `${color} copied to clipboard`)}
+                          aria-label={`Copy ${color}`}
+                        />
+                      ))}
+                    </div>
+                    <strong>{message.palette.name}</strong>
+                    <span>{message.palette.description}</span>
+                    {message.mode === "recommend" && (
+                      <Link to={`/palette/${message.palette.id}`}>Explore palette <span>↗</span></Link>
+                    )}
+                  </div>
+                )}
               </div>
-              <strong>{reply.palette.name}</strong>
-              <span>{reply.palette.description}</span>
-              {reply.mode === "recommend" && (
-                <Link to={`/palette/${reply.palette.id}`}>Explore palette <span>↗</span></Link>
-              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ))}
+        {messages.length === 0 && (
+          <div className="assistant-prompt-suggestions">
+            <span className="assistant-hint">TRY ONE OF THESE</span>
+            {prompts.slice(0, 2).map((item) => (
+              <button key={item} type="button" onClick={() => setPrompt(item)} disabled={isLoading}>
+                <span aria-hidden="true">✧</span>{item}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <form className="assistant-panel-form" onSubmit={submit}>
         <label className="visually-hidden" htmlFor="workspace-assistant-prompt">Ask about colors or describe a palette</label>
         <textarea
@@ -108,14 +163,6 @@ export default function AssistantPanel() {
             disabled={isLoading}
           >
             {item.label}
-          </button>
-        ))}
-      </div>
-      <div className="assistant-prompt-suggestions">
-        <span className="assistant-hint">Try asking</span>
-        {prompts.map((item) => (
-          <button key={item} type="button" onClick={() => setPrompt(item)} disabled={isLoading}>
-            <span aria-hidden="true">✧</span>{item}
           </button>
         ))}
       </div>
