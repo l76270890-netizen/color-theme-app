@@ -51,6 +51,13 @@ address, set `VITE_API_URL` in the frontend environment. Set `FRONTEND_ORIGINS`
 to the exact frontend origin. For HTTPS deployments, set `COOKIE_SECURE=true`
 and use a private JWT secret.
 
+For Render or similar platforms, the backend includes a `Procfile` that starts
+FastAPI with Gunicorn and Uvicorn:
+
+```text
+web: gunicorn app.main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+```
+
 ## Authentication endpoints
 
 - `POST /api/auth/signup` — create an account and sign in.

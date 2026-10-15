@@ -66,7 +66,7 @@ export function AppStateProvider({ children }) {
   const [collections, setCollections] = usePersistentState("huecraft-collections", [
     { id: "inspiration", name: "Inspiration", paletteIds: [] },
   ]);
-  const [themePaletteIndex, setThemePaletteIndex] = useState(0);
+  const [themePaletteIndex, setThemePaletteIndex] = usePersistentState("huecraft-theme-palette-index", 0);
   const [profile, setProfile] = useState(emptyProfile);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
