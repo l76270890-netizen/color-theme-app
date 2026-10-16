@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import TypingHeading from "../components/TypingHeading.jsx";
 import { useAppState } from "../appState.jsx";
 import "./SettingsPage.css";
 
@@ -32,7 +33,7 @@ export default function SettingsPage() {
 
   return (
     <div className="settings-page page-content">
-      <div className="page-heading"><div className="eyebrow small-eyebrow">MAKE HUECRAFT YOURS</div><h1>Profile &amp; settings.</h1><p>Manage your Huecraft profile and preferences.</p></div>
+      <div className="page-heading"><div className="eyebrow small-eyebrow">MAKE HUECRAFT YOURS</div><TypingHeading text="Profile & settings." /><p>Manage your Huecraft profile and preferences.</p></div>
       <div className="settings-layout">
         <form className="settings-panel profile-settings" onSubmit={saveProfile}><div className="settings-panel-heading"><span className="settings-icon">◉</span><div><h2>Profile information</h2><p>Changes are saved to your Huecraft account.</p></div></div>
           <label>Display name<input value={form.name} disabled={!isSignedIn} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>

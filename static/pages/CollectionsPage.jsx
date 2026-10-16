@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import TypingHeading from "../components/TypingHeading.jsx";
 import PaletteCard from "../components/PaletteCard.jsx";
 import { useAppState } from "../appState.jsx";
 import { downloadText, palettes } from "../paletteData.js";
@@ -62,7 +63,7 @@ export default function CollectionsPage() {
 
   return (
     <div className="collections-page page-content">
-      <div className="page-heading collection-heading"><div><div className="eyebrow small-eyebrow">YOUR PERSONAL COLOR LIBRARY</div><h1>Keep what you love.</h1><p>Save palettes and sort them into collections for your projects.</p></div><button className="export-button" type="button" onClick={exportSaved}>Export favorites ↗</button></div>
+      <div className="page-heading collection-heading"><div><div className="eyebrow small-eyebrow">YOUR PERSONAL COLOR LIBRARY</div><TypingHeading text="Keep what you love." /><p>Save palettes and sort them into collections for your projects.</p></div><button className="export-button" type="button" onClick={exportSaved}>Export favorites ↗</button></div>
       <section className="saved-section"><div className="section-heading"><div><div className="eyebrow small-eyebrow">SAVED PALETTES</div><h2>Your favorites <span className="count-pill">{savedPalettes.length}</span></h2></div><Link to="/explore" className="text-link">Find more palettes <span>↗</span></Link></div>
         {savedPalettes.length ? <div className="palette-grid">{savedPalettes.map((palette) => <PaletteCard key={palette.id} palette={palette} favorite onFavorite={() => toggleFavorite(palette.id)} onCopy={copyText} />)}</div> : <div className="collection-empty"><span>♡</span><h3>Your favorites will live here.</h3><p>Tap the heart on a palette to save it to your library.</p><Link to="/explore">Explore palettes ↗</Link></div>}
       </section>

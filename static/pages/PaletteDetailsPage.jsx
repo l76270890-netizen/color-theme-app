@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
+import TypingHeading from "../components/TypingHeading.jsx";
 import PaletteCard from "../components/PaletteCard.jsx";
 import NotFoundPage from "./NotFoundPage.jsx";
 import { useAppState } from "../appState.jsx";
@@ -22,7 +23,7 @@ export default function PaletteDetailsPage() {
   return (
     <div className="palette-details-page page-content">
       <div className="details-breadcrumb"><Link to="/explore">Explore palettes</Link><span>/</span><span>{palette.name}</span></div>
-      <div className="details-heading"><div><div className="eyebrow small-eyebrow">{palette.category.toUpperCase()} · {palette.mood.toUpperCase()}</div><h1>{palette.name}</h1><p>{palette.description}</p></div>
+      <div className="details-heading"><div><div className="eyebrow small-eyebrow">{palette.category.toUpperCase()} · {palette.mood.toUpperCase()}</div><TypingHeading text={palette.name} /><p>{palette.description}</p></div>
         <div className="details-actions"><button type="button" onClick={savePalette}>{favorites.includes(palette.id) ? "♥ Saved" : "♡ Save palette"}</button><button type="button" onClick={() => copyText(palette.colors.join(", "), "Palette HEX values copied")}>Copy HEX values</button><Link to={`/preview?palette=${palette.id}`}>Preview theme ↗</Link></div>
       </div>
       <div className="detail-swatches">{palette.colors.map((color, index) => (

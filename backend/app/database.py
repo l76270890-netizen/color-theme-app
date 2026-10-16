@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import UTC, datetime
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     database_url: str
     jwt_secret_key: str = Field(min_length=32)
     frontend_origins: str = "http://127.0.0.1:5173,http://localhost:5173,http://color-theme-app-xi.vercel.app  "
-    cookie_secure: bool = False
+    cookie_secure: bool = True
     access_token_expire_minutes: int = Field(default=720, gt=0)
     groq_api_key: str | None = None
     groq_model: str = "openai/gpt-oss-20b"
@@ -61,6 +62,25 @@ class WorkspacePreferences(Base):
         JSON,
         nullable=False,
         default=lambda: [{"id": "inspiration", "name": "Inspiration", "paletteIds": []}],
+    )
+
+
+class AssistantHistoryMessage(Base):
+    __tablename__ = "assistant_history_messages"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    mode: Mapped[str] = mapped_column(String(20), nullable=False)
+    prompt: Mapped[str] = mapped_column(String(1000), nullable=False)
+    answer: Mapped[str] = mapped_column(String(2000), nullable=False)
+    palette: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
 

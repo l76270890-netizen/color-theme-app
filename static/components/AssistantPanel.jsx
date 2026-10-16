@@ -20,14 +20,27 @@ export default function AssistantPanel() {
   const [mode, setMode] = useState("ask");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { copyText, showToast } = useAppState();
+  const {
+    assistantHistory,
+    assistantHistoryReady,
+    copyText,
+    isSignedIn,
+    profile,
+    saveAssistantMessage,
+    showToast,
+  } = useAppState();
   const messageId = useRef(0);
   const conversationRef = useRef(null);
+  const conversationMessages = [...assistantHistory, ...messages];
 
   useEffect(() => {
     const conversation = conversationRef.current;
     if (conversation) conversation.scrollTo({ top: conversation.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [assistantHistory, messages]);
+
+  useEffect(() => {
+    setMessages([]);
+  }, [profile.email]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -51,9 +64,19 @@ export default function AssistantPanel() {
         prompt: text,
         ...(mode === "recommend" ? { palettes } : {}),
       });
+      const savedMessage = { ...response, id, prompt: text, loading: false };
       setMessages((current) => current.map((message) => (
-        message.id === id ? { ...message, ...response, loading: false } : message
+        message.id === id ? savedMessage : message
       )));
+      if (isSignedIn) {
+        try {
+          await saveAssistantMessage(savedMessage);
+          setMessages((current) => current.filter((message) => message.id !== id));
+        } catch (error) {
+          console.error("Could not save the AI conversation:", error);
+          showToast(`AI replied, but the conversation could not be saved: ${error.message}`);
+        }
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "The assistant could not complete your request.";
       setMessages((current) => current.map((entry) => (
@@ -73,14 +96,16 @@ export default function AssistantPanel() {
         <h2>Meet AI Mode</h2>
         <p>Ask detailed questions for better color ideas.</p>
       </div>
-      <div ref={conversationRef} className={`assistant-conversation${messages.length ? " has-messages" : ""}`} aria-live="polite">
-        {messages.length === 0 ? (
+      <div ref={conversationRef} className={`assistant-conversation${conversationMessages.length ? " has-messages" : ""}`} aria-live="polite">
+        {!assistantHistoryReady && isSignedIn ? (
+          <div className="assistant-conversation-empty" role="status">Restoring your AI conversation…</div>
+        ) : conversationMessages.length === 0 ? (
           <div className="assistant-conversation-empty">
             <span className="assistant-empty-mark" aria-hidden="true">✳</span>
             <strong>Your color copilot is ready.</strong>
             <p>Ask a question, describe a palette, or find a match.</p>
           </div>
-        ) : messages.map((message) => (
+        ) : conversationMessages.map((message) => (
           <div className="assistant-conversation-turn" key={message.id}>
             <div className="assistant-user-bubble">{message.prompt}</div>
             <div className="assistant-bot-row">
@@ -120,7 +145,7 @@ export default function AssistantPanel() {
             </div>
           </div>
         ))}
-        {messages.length === 0 && (
+        {assistantHistoryReady && conversationMessages.length === 0 && (
           <div className="assistant-prompt-suggestions">
             <span className="assistant-hint">TRY ONE OF THESE</span>
             {prompts.slice(0, 2).map((item) => (

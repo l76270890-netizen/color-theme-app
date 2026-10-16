@@ -38,12 +38,13 @@ function usePersistentState(key, fallback) {
 
 const emptyProfile = { name: "Workspace", email: "", role: "Designer & developer" };
 
-async function apiRequest(path, { method = "GET", body } = {}) {
+async function apiRequest(path, { method = "GET", body, keepalive = false } = {}) {
   let response;
   try {
     response = await fetch(`${API_BASE_URL}/api${path}`, {
       method,
       credentials: "include",
+      keepalive,
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -93,6 +94,8 @@ export function AppStateProvider({ children }) {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [workspaceSyncEnabled, setWorkspaceSyncEnabled] = useState(false);
+  const [assistantHistory, setAssistantHistory] = useState([]);
+  const [assistantHistoryReady, setAssistantHistoryReady] = useState(false);
   const [toast, setToast] = useState("");
   const activeThemePalette = themePalettes[themePaletteIndex];
 
@@ -119,18 +122,27 @@ export function AppStateProvider({ children }) {
         if (!active) return;
         setProfile(toProfile(user));
         setIsSignedIn(true);
-        try {
-          const workspace = await apiRequest("/workspace");
-          if (!active) return;
+        const [workspaceResult, historyResult] = await Promise.allSettled([
+          apiRequest("/workspace"),
+          apiRequest("/workspace/assistant-history"),
+        ]);
+        if (!active) return;
+        if (workspaceResult.status === "fulfilled") {
+          const workspace = workspaceResult.value;
           setTheme(workspace.theme);
           setSidebarCollapsed(workspace.sidebarCollapsed);
           setFavorites(workspace.favorites);
           setCollections(workspace.collections);
           setWorkspaceSyncEnabled(true);
-        } catch (error) {
-          if (!active) return;
-          console.error("Could not restore the saved workspace:", error);
-          setToast(`Signed in, but could not restore your workspace: ${error.message}`);
+        } else {
+          console.error("Could not restore the saved workspace:", workspaceResult.reason);
+          setToast(`Signed in, but could not restore your workspace: ${workspaceResult.reason.message}`);
+        }
+        if (historyResult.status === "fulfilled") {
+          setAssistantHistory(historyResult.value);
+        } else {
+          console.error("Could not restore the saved AI conversation:", historyResult.reason);
+          setToast(`Signed in, but could not restore your AI history: ${historyResult.reason.message}`);
         }
       } catch (error) {
         if (!active) return;
@@ -141,8 +153,12 @@ export function AppStateProvider({ children }) {
         setProfile(emptyProfile);
         setIsSignedIn(false);
         setWorkspaceSyncEnabled(false);
+        setAssistantHistory([]);
       } finally {
-        if (active) setWorkspaceReady(true);
+        if (active) {
+          setWorkspaceReady(true);
+          setAssistantHistoryReady(true);
+        }
       }
     };
     restoreSession();
@@ -154,21 +170,35 @@ export function AppStateProvider({ children }) {
 
   useEffect(() => {
     if (!isSignedIn || !workspaceReady || !workspaceSyncEnabled) return undefined;
+    const workspace = {
+      theme,
+      sidebarCollapsed,
+      favorites,
+      collections,
+    };
     const timer = window.setTimeout(() => {
       apiRequest("/workspace", {
         method: "PUT",
-        body: {
-          theme,
-          sidebarCollapsed,
-          favorites,
-          collections,
-        },
+        body: workspace,
       }).catch((error) => {
         console.error("Could not save the workspace:", error);
         setToast(`Could not save your workspace: ${error.message}`);
       });
     }, 350);
-    return () => window.clearTimeout(timer);
+    const persistBeforeLeaving = () => {
+      apiRequest("/workspace", {
+        method: "PUT",
+        body: workspace,
+        keepalive: true,
+      }).catch((error) => {
+        console.error("Could not save the workspace before leaving:", error);
+      });
+    };
+    window.addEventListener("pagehide", persistBeforeLeaving);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", persistBeforeLeaving);
+    };
   }, [theme, sidebarCollapsed, favorites, collections, isSignedIn, workspaceReady, workspaceSyncEnabled]);
 
   useEffect(() => {
@@ -187,6 +217,7 @@ export function AppStateProvider({ children }) {
     const accountProfile = toProfile(user);
     setProfile(accountProfile);
     setIsSignedIn(true);
+    setAssistantHistory([]);
     await restoreWorkspaceForSignedInUser("Your Huecraft account is ready");
   };
 
@@ -197,26 +228,52 @@ export function AppStateProvider({ children }) {
     });
     setProfile(toProfile(user));
     setIsSignedIn(true);
+    setAssistantHistory([]);
     await restoreWorkspaceForSignedInUser(`Welcome back, ${user.name}`);
   };
 
   const restoreWorkspaceForSignedInUser = async (successMessage) => {
     setWorkspaceReady(false);
     setWorkspaceSyncEnabled(false);
-    try {
-      const workspace = await apiRequest("/workspace");
+    setAssistantHistoryReady(false);
+    const [workspaceResult, historyResult] = await Promise.allSettled([
+      apiRequest("/workspace"),
+      apiRequest("/workspace/assistant-history"),
+    ]);
+    if (workspaceResult.status === "fulfilled") {
+      const workspace = workspaceResult.value;
       setTheme(workspace.theme);
       setSidebarCollapsed(workspace.sidebarCollapsed);
       setFavorites(workspace.favorites);
       setCollections(workspace.collections);
       setWorkspaceSyncEnabled(true);
       showToast(successMessage);
-    } catch (error) {
-      console.error("Could not restore the saved workspace:", error);
-      showToast(`Signed in, but could not restore your workspace: ${error.message}`);
-    } finally {
-      setWorkspaceReady(true);
+    } else {
+      console.error("Could not restore the saved workspace:", workspaceResult.reason);
+      showToast(`Signed in, but could not restore your workspace: ${workspaceResult.reason.message}`);
     }
+    if (historyResult.status === "fulfilled") {
+      setAssistantHistory(historyResult.value);
+    } else {
+      console.error("Could not restore the saved AI conversation:", historyResult.reason);
+      showToast(`Signed in, but could not restore your AI history: ${historyResult.reason.message}`);
+    }
+    setWorkspaceReady(true);
+    setAssistantHistoryReady(true);
+  };
+
+  const saveAssistantMessage = async (entry) => {
+    const savedEntry = await apiRequest("/workspace/assistant-history", {
+      method: "POST",
+      body: {
+        mode: entry.mode,
+        prompt: entry.prompt,
+        answer: entry.answer,
+        palette: entry.palette ?? null,
+      },
+    });
+    setAssistantHistory((current) => [...current, savedEntry].slice(-100));
+    return savedEntry;
   };
 
   const updateProfile = async (nextProfile) => {
@@ -238,6 +295,7 @@ export function AppStateProvider({ children }) {
     setProfile(emptyProfile);
     setIsSignedIn(false);
     setWorkspaceSyncEnabled(false);
+    setAssistantHistory([]);
     showToast("You have been signed out");
   };
 
@@ -280,11 +338,14 @@ export function AppStateProvider({ children }) {
     setCollections,
     profile,
     updateProfile,
+    assistantHistory,
+    assistantHistoryReady,
+    saveAssistantMessage,
     toast,
     showToast,
     copyText,
     toggleFavorite,
-  }), [theme, activeThemePalette, sidebarCollapsed, isSignedIn, favorites, collections, profile, toast]);
+  }), [theme, activeThemePalette, sidebarCollapsed, isSignedIn, favorites, collections, profile, assistantHistory, assistantHistoryReady, toast]);
 
   return (
     <AppStateContext.Provider value={value}>

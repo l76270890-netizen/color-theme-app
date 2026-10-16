@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Brand from "../components/Brand.jsx";
+import TypingHeading from "../components/TypingHeading.jsx";
 import { useAppState } from "../appState.jsx";
 import "./AccountPage.css";
 
@@ -74,7 +75,7 @@ export default function AccountPage() {
         <div className="account-card">
           <Brand />
           <div className="eyebrow small-eyebrow">{isSignUp ? "YOUR COLOR WORKSPACE" : "WELCOME BACK"}</div>
-          <h1 id="account-title">{isSignUp ? "Hello!" : "Welcome back."}</h1>
+          <TypingHeading id="account-title" text={isSignUp ? "Hello!" : "Welcome back."} />
           <p className="account-intro">{isSignUp ? "Create an account to personalize your Huecraft workspace." : "Sign in to continue to your Huecraft workspace."}</p>
           {isSignedIn && (
             <div className="account-signed-in">

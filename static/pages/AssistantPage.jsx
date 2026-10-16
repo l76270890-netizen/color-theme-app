@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import TypingHeading from "../components/TypingHeading.jsx";
 import PaletteCard from "../components/PaletteCard.jsx";
 import { requestAssistant, useAppState } from "../appState.jsx";
 import { palettes } from "../paletteData.js";
@@ -21,16 +22,31 @@ export default function AssistantPage() {
   const [params] = useSearchParams();
   const [prompt, setPrompt] = useState(() => params.get("prompt") ?? "");
   const [mode, setMode] = useState("generate");
-  const [chat, setChat] = useState([]);
+  const [pendingMessages, setPendingMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { favorites, toggleFavorite, copyText, showToast } = useAppState();
+  const {
+    assistantHistory,
+    assistantHistoryReady,
+    favorites,
+    isSignedIn,
+    profile,
+    toggleFavorite,
+    copyText,
+    saveAssistantMessage,
+    showToast,
+  } = useAppState();
   const requestId = useRef(0);
   const transcriptRef = useRef(null);
+  const chat = [...assistantHistory, ...pendingMessages];
 
   useEffect(() => {
     const transcript = transcriptRef.current;
     if (transcript) transcript.scrollTo({ top: transcript.scrollHeight, behavior: "smooth" });
-  }, [chat]);
+  }, [assistantHistory, pendingMessages]);
+
+  useEffect(() => {
+    setPendingMessages([]);
+  }, [profile.email]);
 
   const sendPrompt = async (selectedMode, text) => {
     const normalizedText = text.trim();
@@ -41,7 +57,7 @@ export default function AssistantPage() {
 
     const id = ++requestId.current;
     setIsLoading(true);
-    setChat((current) => [...current, {
+    setPendingMessages((current) => [...current, {
       id,
       prompt: normalizedText,
       mode: selectedMode,
@@ -54,13 +70,28 @@ export default function AssistantPage() {
         prompt: normalizedText,
         ...(selectedMode === "recommend" ? { palettes } : {}),
       });
-      setChat((current) => current.map((item) => (
-        item.id === id ? { ...item, ...response, loading: false } : item
+      const completedMessage = {
+        ...response,
+        id,
+        prompt: normalizedText,
+        loading: false,
+      };
+      setPendingMessages((current) => current.map((item) => (
+        item.id === id ? completedMessage : item
       )));
+      if (isSignedIn) {
+        try {
+          await saveAssistantMessage(completedMessage);
+          setPendingMessages((current) => current.filter((item) => item.id !== id));
+        } catch (error) {
+          console.error("Could not save the AI conversation:", error);
+          showToast(`AI replied, but the conversation could not be saved: ${error.message}`);
+        }
+      }
       setPrompt("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "The assistant could not complete your request.";
-      setChat((current) => current.map((item) => (
+      setPendingMessages((current) => current.map((item) => (
         item.id === id ? { ...item, loading: false, error: message } : item
       )));
       showToast(message);
@@ -80,7 +111,7 @@ export default function AssistantPage() {
     <div className="assistant-page page-content">
       <div className="page-heading assistant-page-heading">
         <div className="eyebrow small-eyebrow">YOUR CREATIVE SIDEKICK</div>
-        <h1>Your idea, in color.</h1>
+        <TypingHeading text="Your idea, in color." />
         <p>Think out loud with your AI color partner. Explore a direction, refine it, and make it yours.</p>
       </div>
       <div className="assistant-layout">
@@ -94,7 +125,12 @@ export default function AssistantPage() {
             <span className="assistant-status"><i /> Groq AI</span>
           </div>
           <div ref={transcriptRef} className="assistant-transcript" aria-live="polite">
-            {chat.length === 0 ? (
+            {isSignedIn && !assistantHistoryReady ? (
+              <div className="assistant-empty" role="status">
+                <span className="assistant-empty-icon" aria-hidden="true">✳</span>
+                <p>Restoring your saved AI conversation…</p>
+              </div>
+            ) : chat.length === 0 ? (
               <div className="assistant-empty">
                 <span className="assistant-empty-icon" aria-hidden="true">✳</span>
                 <span className="eyebrow small-eyebrow">A FRESH CANVAS</span>

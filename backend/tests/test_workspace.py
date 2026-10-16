@@ -8,6 +8,7 @@ test_database_path = Path(tempfile.gettempdir()) / f"huecraft-workspace-tests-{u
 os.environ["DATABASE_URL"] = f"sqlite:///{test_database_path.as_posix()}"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-that-is-at-least-32-characters"
 os.environ["FRONTEND_ORIGINS"] = "http://127.0.0.1:5173"
+os.environ["COOKIE_SECURE"] = "false"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -68,6 +69,91 @@ def test_workspace_preferences_are_saved_per_account(client):
     )
     assert second_signup.status_code == 201
     assert client.get("/api/workspace").json()["favorites"] == []
+    assert client.post("/api/auth/logout").status_code == 204
+    first_login = client.post(
+        "/api/auth/login",
+        json={"email": "alex@example.com", "password": "correct-horse-123"},
+    )
+    assert first_login.status_code == 200
+    assert client.get("/api/workspace").json() == preferences
+
+
+def test_login_session_cookie_survives_a_page_reload(client):
+    signup = client.post(
+        "/api/auth/signup",
+        json={"name": "Alex", "email": "alex@example.com", "password": "correct-horse-123"},
+    )
+    assert signup.status_code == 201
+
+    login = client.post(
+        "/api/auth/login",
+        json={"email": "alex@example.com", "password": "correct-horse-123"},
+    )
+    assert login.status_code == 200
+    assert "max-age=43200" in login.headers["set-cookie"].lower()
+    assert client.get("/api/auth/me").json()["email"] == "alex@example.com"
+
+
+def test_https_login_uses_cross_site_cookie_attributes(client, monkeypatch):
+    monkeypatch.setattr(settings, "cookie_secure", True)
+    signup = client.post(
+        "/api/auth/signup",
+        json={"name": "Alex", "email": "alex@example.com", "password": "correct-horse-123"},
+    )
+
+    assert signup.status_code == 201
+    cookie = signup.headers["set-cookie"].lower()
+    assert "samesite=none" in cookie
+    assert "secure" in cookie
+
+
+def test_assistant_history_is_saved_and_scoped_to_each_account(client):
+    first_signup = client.post(
+        "/api/auth/signup",
+        json={"name": "Alex", "email": "alex@example.com", "password": "correct-horse-123"},
+    )
+    assert first_signup.status_code == 201
+
+    entry = {
+        "mode": "generate",
+        "prompt": "A calm palette for a reading app",
+        "answer": "Soft sea colors create a restful mood.",
+        "palette": {
+            "id": "generated",
+            "name": "Quiet Tide",
+            "description": "A serene set of sea-inspired shades.",
+            "category": "AI generated",
+            "mood": "Calm",
+            "style": "Custom",
+            "colors": ["#102030", "#234567", "#4680A0", "#A0C0D0", "#F0F0E0"],
+            "keywords": [],
+        },
+    }
+    saved = client.post(
+        "/api/workspace/assistant-history",
+        json=entry,
+        headers={"Origin": "http://127.0.0.1:5173"},
+    )
+    assert saved.status_code == 201
+    assert saved.json()["prompt"] == entry["prompt"]
+    assert saved.json()["palette"] == entry["palette"]
+    assert client.get("/api/workspace/assistant-history").json() == [saved.json()]
+
+    assert client.post("/api/auth/logout").status_code == 204
+    second_signup = client.post(
+        "/api/auth/signup",
+        json={"name": "Sam", "email": "sam@example.com", "password": "correct-horse-456"},
+    )
+    assert second_signup.status_code == 201
+    assert client.get("/api/workspace/assistant-history").json() == []
+
+    assert client.post("/api/auth/logout").status_code == 204
+    login = client.post(
+        "/api/auth/login",
+        json={"email": "alex@example.com", "password": "correct-horse-123"},
+    )
+    assert login.status_code == 200
+    assert client.get("/api/workspace/assistant-history").json() == [saved.json()]
 
 
 def test_workspace_rejects_invalid_theme(client):

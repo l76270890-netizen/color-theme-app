@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import TypingHeading from "../components/TypingHeading.jsx";
 import PaletteCard from "../components/PaletteCard.jsx";
 import { useAppState } from "../appState.jsx";
 import { paletteCategories, paletteStyles, palettes } from "../paletteData.js";
@@ -32,7 +33,7 @@ export default function ExplorePage() {
 
   return (
     <div className="explore-page page-content">
-      <div className="page-heading"><div className="eyebrow small-eyebrow">YOUR NEXT COLOR STORY</div><h1>Explore palettes.</h1><p>Ready-made color combinations for the things you’re building.</p></div>
+      <div className="page-heading"><div className="eyebrow small-eyebrow">YOUR NEXT COLOR STORY</div><TypingHeading text="Explore palettes." /><p>Ready-made color combinations for the things you’re building.</p></div>
       <div className="explore-controls">
         <label className="search-box explore-search">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 4.2 4.2" /></svg>

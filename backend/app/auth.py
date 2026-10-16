@@ -134,7 +134,7 @@ def set_auth_cookie(response: Response, user_id: int) -> None:
         max_age=settings.access_token_expire_minutes * 60,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite="lax",
+        samesite="none" if settings.cookie_secure else "lax",
         path="/api",
     )
 
@@ -236,7 +236,7 @@ def sign_out(request: Request, response: Response) -> None:
         key=AUTH_COOKIE_NAME,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite="lax",
+        samesite="none" if settings.cookie_secure else "lax",
         path="/api",
     )
     response.status_code = status.HTTP_204_NO_CONTENT

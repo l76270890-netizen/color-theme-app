@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import TypingHeading from "../components/TypingHeading.jsx";
 import { useAppState } from "../appState.jsx";
 import { getPalette, palettePreviewColors, palettes } from "../paletteData.js";
 import "./PreviewPage.css";
@@ -36,7 +37,7 @@ export default function PreviewPage() {
 
   return (
     <div className="preview-page page-content">
-      <div className="page-heading"><div className="eyebrow small-eyebrow">SEE IT IN CONTEXT</div><h1>Preview your theme.</h1><p>Try a palette on a sample website. Change colors and see the layout update instantly.</p></div>
+      <div className="page-heading"><div className="eyebrow small-eyebrow">SEE IT IN CONTEXT</div><TypingHeading text="Preview your theme." /><p>Try a palette on a sample website. Change colors and see the layout update instantly.</p></div>
       <div className="preview-toolbar">
         <label>Palette<select value={paletteId} onChange={(event) => updatePalette(event.target.value)}>{palettes.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
         <div className="mode-switch" role="group" aria-label="Preview theme mode"><button type="button" className={mode === "light" ? "selected" : ""} aria-pressed={mode === "light"} onClick={() => changeMode("light")}>☼ Light</button><button type="button" className={mode === "dark" ? "selected" : ""} aria-pressed={mode === "dark"} onClick={() => changeMode("dark")}>☾ Dark</button></div>

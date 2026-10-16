@@ -49,8 +49,11 @@ signed-in workspace preferences.
 The frontend uses `http://127.0.0.1:8000` locally and defaults to the production
 Railway API when built for production. For a different API address, set
 `VITE_API_URL` in the frontend environment. Set `FRONTEND_ORIGINS` on the
-backend to the exact frontend origin. For HTTPS deployments, set
-`COOKIE_SECURE=true` and use a private JWT secret.
+backend to the exact frontend origin. Production defaults to
+`COOKIE_SECURE=true`; keep it enabled and use a private JWT secret. This is required for the
+Vercel frontend to send its sign-in cookie to the separate Railway API: secure
+cookies use `SameSite=None` for that cross-site request. Keep it `false` for
+local HTTP development.
 
 ## AI assistant
 
@@ -87,6 +90,10 @@ web: gunicorn app.main:app --workers 1 --worker-class uvicorn.workers.UvicornWor
   collections.
 - `PUT /api/workspace` — save those workspace preferences to the signed-in user's
   account.
+- `GET /api/workspace/assistant-history` — load the signed-in user's last 100 AI
+  conversations.
+- `POST /api/workspace/assistant-history` — save a completed AI conversation to
+  that account.
 - `POST /api/ai/chat` — generate a palette, recommend a Huecraft palette, or ask
   a color question. The request `mode` is `generate`, `recommend`, or `ask`.
 
@@ -94,8 +101,13 @@ Workspace preferences are also cached in the browser for guest use. After
 signing in, the account's saved preferences are restored and changes sync to the
 backend.
 
-Passwords are hashed with Argon2. Sessions use a short-lived, HTTP-only,
-SameSite=Lax cookie; the browser does not store passwords or bearer tokens.
+Account preferences and AI conversations are stored in the backend database, so
+they follow the account across refreshes and devices. Guest preferences remain
+cached in the browser. The AI conversation keeps the latest 100 completed
+responses per account.
+
+Passwords are hashed with Argon2. Sessions use an HTTP-only cookie that lasts
+12 hours by default; the browser does not store passwords or bearer tokens.
 
 Run the backend tests from this directory with
 `.venv\Scripts\python.exe -m pytest -q tests`. They use a temporary SQLite

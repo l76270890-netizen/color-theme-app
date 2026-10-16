@@ -18,7 +18,7 @@
   line-height: 1.06;
 }
 
-.home-copy h1 span {
+.home-copy h1 .typing-heading-accent {
   color: var(--accent);
 }
 

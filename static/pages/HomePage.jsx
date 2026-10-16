@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import TypingHeading from "../components/TypingHeading.jsx";
 import PaletteCard from "../components/PaletteCard.jsx";
 import { useAppState } from "../appState.jsx";
 import { findPalette, paletteCategories, palettePreviewColors, paletteStyles, paletteCss, palettes, colorValues } from "../paletteData.js";
@@ -75,7 +76,7 @@ export default function HomePage() {
       <section className="home-hero">
         <div className="home-copy">
           <div className="eyebrow"><span className="sparkle">✳</span> THE COLOR TOOLKIT FOR BUILDERS</div>
-          <h1>Find the perfect colors for your <span>next project.</span></h1>
+          <TypingHeading text="Find the perfect colors for your next project." accentText="next project." />
           <p>Explore thoughtful palettes, tune every color, and preview your next idea in a real interface.</p>
           <form className="home-search" onSubmit={submitSearch}>
             <label className="visually-hidden" htmlFor="home-search">Search by palette name, color mood, or HEX code</label>
