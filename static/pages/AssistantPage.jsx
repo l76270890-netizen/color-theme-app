@@ -27,13 +27,18 @@ export default function AssistantPage() {
   const {
     assistantHistory,
     assistantHistoryReady,
+    assistantHistoryGeneration,
+    assistantBusy,
     favorites,
     isSignedIn,
     profile,
     toggleFavorite,
     copyText,
+    clearAssistantHistory,
+    finishAssistantRequest,
     saveAssistantMessage,
     showToast,
+    startAssistantRequest,
   } = useAppState();
   const requestId = useRef(0);
   const transcriptRef = useRef(null);
@@ -46,9 +51,10 @@ export default function AssistantPage() {
 
   useEffect(() => {
     setPendingMessages([]);
-  }, [profile.email]);
+  }, [profile.email, assistantHistoryGeneration]);
 
   const sendPrompt = async (selectedMode, text) => {
+    if (isLoading) return;
     const normalizedText = text.trim();
     if (!normalizedText) {
       showToast("Tell the assistant what you’re designing");
@@ -56,6 +62,12 @@ export default function AssistantPage() {
     }
 
     const id = ++requestId.current;
+    try {
+      startAssistantRequest();
+    } catch (error) {
+      showToast(error.message);
+      return;
+    }
     setIsLoading(true);
     setPendingMessages((current) => [...current, {
       id,
@@ -96,6 +108,7 @@ export default function AssistantPage() {
       )));
       showToast(message);
     } finally {
+      finishAssistantRequest();
       setIsLoading(false);
     }
   };
@@ -106,6 +119,22 @@ export default function AssistantPage() {
   };
 
   const regenerate = (item) => void sendPrompt(item.mode, item.prompt);
+
+  const clearConversation = async () => {
+    if (isLoading || assistantBusy || !chat.length) return;
+    const confirmation = isSignedIn
+      ? "Delete this AI conversation from your account?"
+      : "Delete this AI conversation? This cannot be undone.";
+    if (!window.confirm(confirmation)) return;
+    try {
+      await clearAssistantHistory();
+      setPendingMessages([]);
+      showToast("AI conversation deleted");
+    } catch (error) {
+      console.error("Could not delete the AI conversation:", error);
+      showToast(`Could not delete the AI conversation: ${error.message}`);
+    }
+  };
 
   return (
     <div className="assistant-page page-content">
@@ -123,6 +152,12 @@ export default function AssistantPage() {
               <p>AI-powered color thinking, tailored to your brief.</p>
             </div>
             <span className="assistant-status"><i /> Groq AI</span>
+            {chat.length > 0 && (
+              <button className="assistant-clear-button" type="button" onClick={clearConversation} disabled={isLoading || assistantBusy}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>
+                Clear chat
+              </button>
+            )}
           </div>
           <div ref={transcriptRef} className="assistant-transcript" aria-live="polite">
             {isSignedIn && !assistantHistoryReady ? (
@@ -234,9 +269,9 @@ export default function AssistantPage() {
                 : mode === "recommend"
                   ? "Describe the palette you need…"
                   : "Describe your project, audience, and mood…"}
-              disabled={isLoading}
+              disabled={isLoading || assistantBusy}
             />
-            <button type="submit" disabled={isLoading || !prompt.trim()} aria-label={isLoading ? "Assistant is responding" : "Send message"}>
+            <button type="submit" disabled={isLoading || assistantBusy || !prompt.trim()} aria-label={isLoading ? "Assistant is responding" : "Send message"}>
               {isLoading ? (
                 <span className="assistant-send-loading" aria-hidden="true">···</span>
               ) : (
@@ -254,7 +289,7 @@ export default function AssistantPage() {
                 type="button"
                 aria-pressed={mode === value}
                 onClick={() => setMode(value)}
-                disabled={isLoading}
+                disabled={isLoading || assistantBusy}
               >
                 {label}
               </button>

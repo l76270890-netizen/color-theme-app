@@ -3384,6 +3384,59 @@ h3 {
   padding: 5px 3px 8px 0;
 }
 
+.assistant-conversation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.assistant-conversation-actions>span {
+  color: var(--quiet);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .7px;
+}
+
+.assistant-conversation-actions button {
+  display: inline-flex;
+  min-height: 27px;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 8px;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.assistant-conversation-actions button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #d87777 55%, var(--line));
+  color: #e29595;
+  background: color-mix(in srgb, #d87777 8%, transparent);
+}
+
+.assistant-conversation-actions button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.assistant-conversation-actions button svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
 .assistant-conversation-empty {
   display: grid;
   flex: 1;

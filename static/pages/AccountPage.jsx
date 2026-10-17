@@ -58,7 +58,7 @@ export default function AccountPage() {
     try {
       if (isSignUp) await signUp({ name, email, password });
       else await signIn({ email, password });
-      navigate("/");
+      navigate(location.state?.returnTo ?? "/home", { replace: true });
     } catch (submissionError) {
       setError(submissionError instanceof Error ? submissionError.message : "Could not complete that action.");
     } finally {
@@ -93,7 +93,7 @@ export default function AccountPage() {
             {isSignUp ? "Already have an account?" : "New to Huecraft?"}{" "}
             <Link
               to={isSignUp ? "/login" : "/signup"}
-              state={backgroundLocation ? { backgroundLocation } : undefined}
+              state={backgroundLocation ? { backgroundLocation, returnTo: location.state?.returnTo } : undefined}
             >
               {isSignUp ? "Sign in" : "Create an account"}
             </Link>

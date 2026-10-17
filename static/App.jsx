@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { Route, Routes, useLocation, useNavigationType } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigationType } from "react-router-dom";
 import AccountPage from "./pages/AccountPage.jsx";
+import WelcomePage from "./pages/WelcomePage.jsx";
 import Layout from "./components/Layout.jsx";
 import AssistantPage from "./pages/AssistantPage.jsx";
 import CollectionsPage from "./pages/CollectionsPage.jsx";
@@ -10,6 +11,7 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 import PaletteDetailsPage from "./pages/PaletteDetailsPage.jsx";
 import PreviewPage from "./pages/PreviewPage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
+import { useAppState } from "./appState.jsx";
 
 function ScrollToTop() {
   const location = useLocation();
@@ -23,6 +25,19 @@ function ScrollToTop() {
   return null;
 }
 
+function RequireSignIn() {
+  const { authReady, isSignedIn } = useAppState();
+  const location = useLocation();
+
+  if (!authReady) {
+    return <div className="auth-checking" role="status">Checking your workspace…</div>;
+  }
+  if (!isSignedIn) {
+    return <Navigate to="/" replace state={{ from: location }} />;
+  }
+  return <Outlet />;
+}
+
 export default function App() {
   const location = useLocation();
   const backgroundLocation = location.state?.backgroundLocation;
@@ -31,18 +46,21 @@ export default function App() {
     <>
       <ScrollToTop />
       <Routes location={backgroundLocation || location}>
-        <Route element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route path="explore" element={<ExplorePage />} />
-          <Route path="assistant" element={<AssistantPage />} />
-          <Route path="palette/:paletteId" element={<PaletteDetailsPage />} />
-          <Route path="preview" element={<PreviewPage />} />
-          <Route path="collections" element={<CollectionsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="login" element={<AccountPage />} />
-          <Route path="signup" element={<AccountPage />} />
-          <Route path="*" element={<NotFoundPage />} />
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="login" element={<AccountPage />} />
+        <Route path="signup" element={<AccountPage />} />
+        <Route element={<RequireSignIn />}>
+          <Route element={<Layout />}>
+            <Route path="home" element={<HomePage />} />
+            <Route path="explore" element={<ExplorePage />} />
+            <Route path="assistant" element={<AssistantPage />} />
+            <Route path="palette/:paletteId" element={<PaletteDetailsPage />} />
+            <Route path="preview" element={<PreviewPage />} />
+            <Route path="collections" element={<CollectionsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       {backgroundLocation && (
         <Routes>

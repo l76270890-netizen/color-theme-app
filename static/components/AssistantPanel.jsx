@@ -23,11 +23,16 @@ export default function AssistantPanel() {
   const {
     assistantHistory,
     assistantHistoryReady,
+    assistantHistoryGeneration,
+    assistantBusy,
     copyText,
+    clearAssistantHistory,
+    finishAssistantRequest,
     isSignedIn,
     profile,
     saveAssistantMessage,
     showToast,
+    startAssistantRequest,
   } = useAppState();
   const messageId = useRef(0);
   const conversationRef = useRef(null);
@@ -40,16 +45,23 @@ export default function AssistantPanel() {
 
   useEffect(() => {
     setMessages([]);
-  }, [profile.email]);
+  }, [profile.email, assistantHistoryGeneration]);
 
   const submit = async (event) => {
     event.preventDefault();
+    if (isLoading) return;
     const text = prompt.trim();
     if (!text) {
       showToast("Tell the assistant what you’re designing");
       return;
     }
     const id = ++messageId.current;
+    try {
+      startAssistantRequest();
+    } catch (error) {
+      showToast(error.message);
+      return;
+    }
     setIsLoading(true);
     setPrompt("");
     setMessages((current) => [...current, {
@@ -84,7 +96,24 @@ export default function AssistantPanel() {
       )));
       showToast(message);
     } finally {
+      finishAssistantRequest();
       setIsLoading(false);
+    }
+  };
+
+  const clearConversation = async () => {
+    if (isLoading || assistantBusy || !conversationMessages.length) return;
+    const confirmation = isSignedIn
+      ? "Delete this AI conversation from your account?"
+      : "Delete this AI conversation? This cannot be undone.";
+    if (!window.confirm(confirmation)) return;
+    try {
+      await clearAssistantHistory();
+      setMessages([]);
+      showToast("AI conversation deleted");
+    } catch (error) {
+      console.error("Could not delete the AI conversation:", error);
+      showToast(`Could not delete the AI conversation: ${error.message}`);
     }
   };
 
@@ -96,6 +125,15 @@ export default function AssistantPanel() {
         <h2>Meet AI Mode</h2>
         <p>Ask detailed questions for better color ideas.</p>
       </div>
+      {conversationMessages.length > 0 && (
+        <div className="assistant-conversation-actions">
+          <span>YOUR CONVERSATION</span>
+          <button type="button" onClick={clearConversation} disabled={isLoading || assistantBusy}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>
+            Clear chat
+          </button>
+        </div>
+      )}
       <div ref={conversationRef} className={`assistant-conversation${conversationMessages.length ? " has-messages" : ""}`} aria-live="polite">
         {!assistantHistoryReady && isSignedIn ? (
           <div className="assistant-conversation-empty" role="status">Restoring your AI conversation…</div>
@@ -165,11 +203,11 @@ export default function AssistantPanel() {
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
           placeholder="Ask anything about color..."
-          disabled={isLoading}
+          disabled={isLoading || assistantBusy}
         />
         <div className="assistant-composer-tools">
           <span className="assistant-mode-label">{modes.find((item) => item.value === mode)?.label}</span>
-          <button type="submit" disabled={isLoading || !prompt.trim()} aria-label={isLoading ? "Assistant is responding" : "Send prompt"}>
+          <button type="submit" disabled={isLoading || assistantBusy || !prompt.trim()} aria-label={isLoading ? "Assistant is responding" : "Send prompt"}>
             {isLoading ? "…" : (
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 19V5m-7 7 7-7 7 7" />
@@ -185,7 +223,7 @@ export default function AssistantPanel() {
             type="button"
             aria-pressed={mode === item.value}
             onClick={() => setMode(item.value)}
-            disabled={isLoading}
+            disabled={isLoading || assistantBusy}
           >
             {item.label}
           </button>

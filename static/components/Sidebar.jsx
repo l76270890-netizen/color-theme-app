@@ -4,7 +4,7 @@ import { useAppState } from "../appState.jsx";
 import Brand from "./Brand.jsx";
 
 const links = [
-  { to: "/", label: "Home", icon: "⌂", end: true },
+  { to: "/home", label: "Home", icon: "⌂", end: true },
   { to: "/explore", label: "Explore palettes", icon: "◈" },
   { to: "/assistant", label: "AI assistant", icon: "✳", badge: "NEW" },
   { to: "/collections", label: "Collections", icon: "▤" },

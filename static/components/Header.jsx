@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAppState } from "../appState.jsx";
 
 const links = [
-  { to: "/", label: "Home", end: true },
+  { to: "/home", label: "Home", end: true },
   { to: "/explore", label: "Explore palettes" },
   { to: "/assistant", label: "AI assistant" },
   { to: "/collections", label: "Collections" },

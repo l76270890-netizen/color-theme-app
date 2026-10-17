@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { palettes } from "./paletteData.js";
 import { getThemePaletteStyle, themePalettes } from "./themePalettes.js";
 
@@ -92,10 +92,15 @@ export function AppStateProvider({ children }) {
   const [themePaletteIndex, setThemePaletteIndex] = usePersistentState("huecraft-theme-palette-index", 0);
   const [profile, setProfile] = useState(emptyProfile);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [workspaceSyncEnabled, setWorkspaceSyncEnabled] = useState(false);
   const [assistantHistory, setAssistantHistory] = useState([]);
   const [assistantHistoryReady, setAssistantHistoryReady] = useState(false);
+  const [assistantHistoryGeneration, setAssistantHistoryGeneration] = useState(0);
+  const [assistantBusy, setAssistantBusy] = useState(false);
+  const assistantRequestCount = useRef(0);
+  const assistantHistoryClearing = useRef(false);
   const [toast, setToast] = useState("");
   const activeThemePalette = themePalettes[themePaletteIndex];
 
@@ -156,6 +161,7 @@ export function AppStateProvider({ children }) {
         setAssistantHistory([]);
       } finally {
         if (active) {
+          setAuthReady(true);
           setWorkspaceReady(true);
           setAssistantHistoryReady(true);
         }
@@ -262,7 +268,7 @@ export function AppStateProvider({ children }) {
     setAssistantHistoryReady(true);
   };
 
-  const saveAssistantMessage = async (entry) => {
+  const saveAssistantMessage = useCallback(async (entry) => {
     const savedEntry = await apiRequest("/workspace/assistant-history", {
       method: "POST",
       body: {
@@ -274,7 +280,43 @@ export function AppStateProvider({ children }) {
     });
     setAssistantHistory((current) => [...current, savedEntry].slice(-100));
     return savedEntry;
-  };
+  }, []);
+
+  const startAssistantRequest = useCallback(() => {
+    if (assistantHistoryClearing.current) {
+      throw new Error("The conversation is being deleted. Try again in a moment.");
+    }
+    assistantRequestCount.current += 1;
+    setAssistantBusy(true);
+  }, []);
+
+  const finishAssistantRequest = useCallback(() => {
+    assistantRequestCount.current = Math.max(0, assistantRequestCount.current - 1);
+    if (assistantRequestCount.current === 0 && !assistantHistoryClearing.current) {
+      setAssistantBusy(false);
+    }
+  }, []);
+
+  const clearAssistantHistory = useCallback(async () => {
+    if (assistantRequestCount.current > 0) {
+      throw new Error("Wait for the current AI reply to finish before deleting the conversation.");
+    }
+    if (assistantHistoryClearing.current) {
+      throw new Error("The conversation is already being deleted.");
+    }
+    assistantHistoryClearing.current = true;
+    setAssistantBusy(true);
+    try {
+      if (isSignedIn) {
+        await apiRequest("/workspace/assistant-history", { method: "DELETE" });
+      }
+      setAssistantHistory([]);
+      setAssistantHistoryGeneration((current) => current + 1);
+    } finally {
+      assistantHistoryClearing.current = false;
+      setAssistantBusy(false);
+    }
+  }, [isSignedIn]);
 
   const updateProfile = async (nextProfile) => {
     const user = await apiRequest("/auth/me", {
@@ -328,6 +370,7 @@ export function AppStateProvider({ children }) {
     activeThemePalette,
     sidebarCollapsed,
     setSidebarCollapsed,
+    authReady,
     isSignedIn,
     signUp,
     signIn,
@@ -340,12 +383,17 @@ export function AppStateProvider({ children }) {
     updateProfile,
     assistantHistory,
     assistantHistoryReady,
+    assistantHistoryGeneration,
+    assistantBusy,
+    startAssistantRequest,
+    finishAssistantRequest,
     saveAssistantMessage,
+    clearAssistantHistory,
     toast,
     showToast,
     copyText,
     toggleFavorite,
-  }), [theme, activeThemePalette, sidebarCollapsed, isSignedIn, favorites, collections, profile, assistantHistory, assistantHistoryReady, toast]);
+  }), [theme, activeThemePalette, sidebarCollapsed, authReady, isSignedIn, favorites, collections, profile, assistantHistory, assistantHistoryReady, assistantHistoryGeneration, assistantBusy, startAssistantRequest, finishAssistantRequest, saveAssistantMessage, clearAssistantHistory, toast]);
 
   return (
     <AppStateContext.Provider value={value}>

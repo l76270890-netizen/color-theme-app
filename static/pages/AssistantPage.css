@@ -101,6 +101,43 @@
   box-shadow: 0 0 9px rgb(85 189 145 / 45%);
 }
 
+.assistant-clear-button {
+  display: inline-flex;
+  min-height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 9px;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.assistant-clear-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #d87777 55%, var(--line));
+  color: #e29595;
+  background: color-mix(in srgb, #d87777 8%, transparent);
+}
+
+.assistant-clear-button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.assistant-clear-button svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
 .assistant-transcript {
   display: flex;
   min-height: 320px;
@@ -712,6 +749,18 @@
     gap: 5px;
     padding: 6px 7px;
     font-size: 8px;
+  }
+
+  .assistant-clear-button {
+    min-height: 30px;
+    gap: 4px;
+    padding: 0 6px;
+    font-size: 8px;
+  }
+
+  .assistant-clear-button svg {
+    width: 12px;
+    height: 12px;
   }
 
   .assistant-transcript {

@@ -21,13 +21,13 @@ export default function Footer() {
           <strong>Make it yours</strong>
           <Link to="/preview">Live website preview</Link>
           <Link to="/settings">Workspace settings</Link>
-          <Link to="/#developer-tools">Developer tools</Link>
+          <Link to="/home#developer-tools">Developer tools</Link>
         </div>
         <div className="footer-links">
           <strong>Learn &amp; explore</strong>
-          <Link to="/#about">About Huecraft</Link>
-          <Link to="/#home-categories-heading">Browse by project</Link>
-          <Link to="/">Back to home ↑</Link>
+          <Link to="/home#about">About Huecraft</Link>
+          <Link to="/home#home-categories-heading">Browse by project</Link>
+          <Link to="/home">Back to home ↑</Link>
         </div>
       </div>
       <div className="footer-bottom">
